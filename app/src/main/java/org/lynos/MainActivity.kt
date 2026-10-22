@@ -174,7 +174,7 @@ private fun NeuralGraph(phase: Float, modifier: Modifier = Modifier) {
             val start = points[edge.first]
             val end = points[edge.second]
             drawLine(
-                color = NightBlue.copy(alpha = 0.42f + 0.18f * sin(phase * 6.28f + index).toFloat().let { (it + 1f) / 2f }),
+                color = NightBlue.copy(alpha = 0.42f + 0.18f * sin((phase * 6.28f + index).toDouble()).toFloat().let { (it + 1f) / 2f }),
                 start = start,
                 end = end,
                 strokeWidth = 1.2.dp.toPx(),
@@ -197,7 +197,7 @@ private fun NeuralGraph(phase: Float, modifier: Modifier = Modifier) {
 
         graphNodes.forEachIndexed { index, node ->
             val point = points[index]
-            val pulse = 0.82f + 0.18f * sin(phase * 6.28f + index * 0.8f).toFloat()
+            val pulse = 0.82f + 0.18f * sin((phase * 6.28f + index * 0.8f).toDouble()).toFloat()
             drawCircle(
                 color = NeuralCyan.copy(alpha = 0.10f),
                 radius = node.radius * 3.2f * pulse,
