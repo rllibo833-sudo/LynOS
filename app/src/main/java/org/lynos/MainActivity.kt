@@ -12,12 +12,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -71,84 +73,115 @@ private fun LynHome() {
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 5200),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Restart
         ),
         label = "signal-phase"
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF202F43), MidnightSlate, Color(0xFF131D2A))
-                )
-            )
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize().background(MidnightSlate)
     ) {
-        // Quiet cyan bloom adds depth without a costly image or blur effect.
-        Canvas(Modifier.fillMaxSize()) {
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(NeuralCyan.copy(alpha = 0.07f), Color.Transparent),
-                    center = Offset(size.width * 0.92f, size.height * 0.18f),
-                    radius = size.width * 0.72f
-                ),
-                radius = size.width * 0.72f,
-                center = Offset(size.width * 0.92f, size.height * 0.18f)
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 26.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            Header()
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("YOUR MIND, IN MOTION", color = NeuralCyan, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.2.sp)
-                Text("Knowledge,\nconnected.", color = SoftText, fontSize = 32.sp, lineHeight = 36.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.7).sp)
-                Text("One quiet space for everything you’re building.", color = MutedText, fontSize = 13.sp)
+        val landscape = maxWidth > maxHeight
+        Box(Modifier.fillMaxSize()) {
+            Canvas(Modifier.fillMaxSize()) {
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color(0xFF202F43), MidnightSlate, Color(0xFF131D2A))
+                    )
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(NeuralCyan.copy(alpha = 0.10f), Color.Transparent),
+                        center = Offset(size.width * 0.78f, size.height * 0.24f),
+                        radius = size.minDimension * 0.75f
+                    ),
+                    radius = size.minDimension * 0.75f,
+                    center = Offset(size.width * 0.78f, size.height * 0.24f)
+                )
             }
 
-            KnowledgePanel(phase = phase)
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                MetricPill("●", "LOCAL-FIRST", Modifier.weight(1f))
-                MetricPill("↗", "LOW OVERHEAD", Modifier.weight(1f))
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("WORKSPACE", color = SoftText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                    Text("Your tools, one layer away", color = MutedText, fontSize = 11.sp)
+            if (landscape) {
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(22.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1.45f).fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Header()
+                        Row(
+                            modifier = Modifier.fillMaxWidth().weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(0.82f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text("LYNOS / COGNITIVE SPACE", color = NeuralCyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+                                Text("Knowledge,\nconnected.", color = SoftText, fontSize = 30.sp, lineHeight = 33.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.7).sp)
+                                Text("A living map for ideas.", color = MutedText, fontSize = 12.sp)
+                                Spacer(Modifier.height(8.dp))
+                                MetricPill("●", "LOCAL-FIRST", Modifier.fillMaxWidth())
+                                MetricPill("↗", "LOW OVERHEAD", Modifier.fillMaxWidth())
+                            }
+                            KnowledgePanel(phase = phase, modifier = Modifier.weight(1.18f).fillMaxSize())
+                        }
+                        FooterStatus()
+                    }
+                    Column(
+                        modifier = Modifier.weight(0.85f).fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Text("WORKSPACE", color = SoftText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.5.sp)
+                        Text("Your tools, one layer away", color = MutedText, fontSize = 11.sp)
+                        ModuleCard("01", "Mnemos", "Knowledge graph", "⌘", Modifier.fillMaxWidth().weight(1f))
+                        ModuleCard("02", "Cuk Studio", "Native workspace", "{ }", Modifier.fillMaxWidth().weight(1f))
+                    }
                 }
-                Text("02 MODULES", color = NightBlue, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                ModuleCard("01", "Mnemos", "Knowledge graph", "⌘", Modifier.weight(1f))
-                ModuleCard("02", "Cuk Studio", "Native workspace", "{ }", Modifier.weight(1f))
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0x66202F43), RoundedCornerShape(14.dp))
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(Modifier.size(7.dp).background(NeuralCyan, CircleShape))
-                Spacer(Modifier.width(9.dp))
-                Text("LYNOS CORE", color = SoftText, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
-                Spacer(Modifier.weight(1f))
-                Text("LOCAL • PROTOTYPE 0.1", color = MutedText, fontSize = 9.sp, letterSpacing = 0.5.sp)
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Header()
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("LYNOS / COGNITIVE SPACE", color = NeuralCyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.8.sp)
+                        Text("Knowledge, connected.", color = SoftText, fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.6).sp)
+                        Text("A living map for ideas.", color = MutedText, fontSize = 12.sp)
+                    }
+                    KnowledgePanel(phase = phase, modifier = Modifier.weight(1f))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        MetricPill("●", "LOCAL-FIRST", Modifier.weight(1f))
+                        MetricPill("↗", "LOW OVERHEAD", Modifier.weight(1f))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                        Text("WORKSPACE", color = SoftText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
+                        Text("02 MODULES", color = NightBlue, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        ModuleCard("01", "Mnemos", "Knowledge graph", "⌘", Modifier.weight(1f))
+                        ModuleCard("02", "Cuk Studio", "Native workspace", "{ }", Modifier.weight(1f))
+                    }
+                    FooterStatus()
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun FooterStatus() {
+    Row(
+        modifier = Modifier.fillMaxWidth().background(Color(0x66202F43), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(6.dp).background(NeuralCyan, CircleShape))
+        Spacer(Modifier.width(8.dp))
+        Text("LYNOS CORE", color = SoftText, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+        Spacer(Modifier.weight(1f))
+        Text("LOCAL • PROTOTYPE 0.1", color = MutedText, fontSize = 8.sp, letterSpacing = 0.4.sp)
     }
 }
 
@@ -199,9 +232,9 @@ private fun Header() {
 }
 
 @Composable
-private fun KnowledgePanel(phase: Float) {
+private fun KnowledgePanel(phase: Float, modifier: Modifier = Modifier) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = Color(0xE61D2B3D),
         shape = RoundedCornerShape(25.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x553F6582))
@@ -216,7 +249,7 @@ private fun KnowledgePanel(phase: Float) {
                     Text("LIVE", modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp), color = NeuralCyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 }
             }
-            Box(Modifier.fillMaxWidth().height(188.dp)) {
+            Box(Modifier.fillMaxWidth().weight(1f).heightIn(min = 112.dp, max = 250.dp)) {
                 NeuralGraph(phase = phase, modifier = Modifier.fillMaxSize())
                 Column(
                     modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 4.dp),
