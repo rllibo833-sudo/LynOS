@@ -238,7 +238,7 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
                 append(", \"updatedAt\": ").append(note.updatedAt).append('}')
             }
             if (notes.isNotEmpty()) append('\n')
-            append("  ]\\n}\\n")
+            append("  ]\n}\n")
         }
     }
 
