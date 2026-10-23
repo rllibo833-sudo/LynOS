@@ -24,23 +24,26 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            // Release APK is intentionally unsigned in CI. Sign locally with a private key;
-            // never commit signing keys or passwords to the repository.
+            // CI signs with a disposable key so the artifact can be installed for testing.
+            // For durable updates, configure a private, persistent release keystore.
+            val ciStore = System.getenv("LYNOS_KEYSTORE")
+            if (!ciStore.isNullOrBlank()) {
+                signingConfig = signingConfigs.create("ciRelease") {
+                    storeFile = file(ciStore)
+                    storePassword = System.getenv("LYNOS_STORE_PASSWORD")
+                    keyAlias = System.getenv("LYNOS_KEY_ALIAS")
+                    keyPassword = System.getenv("LYNOS_KEY_PASSWORD")
+                }
+            }
         }
     }
 
-    buildFeatures {
-        compose = true
-    }
-
+    buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 }
 
 dependencies {
