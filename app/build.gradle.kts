@@ -12,8 +12,21 @@ android {
         applicationId = "org.lynos"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+        release {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            // Release APK is intentionally unsigned in CI. Sign locally with a private key;
+            // never commit signing keys or passwords to the repository.
+        }
     }
 
     buildFeatures {
