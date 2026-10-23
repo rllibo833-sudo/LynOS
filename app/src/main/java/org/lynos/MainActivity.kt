@@ -124,7 +124,7 @@ private fun LynOSApp(context: Context) {
         else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;notes=withContext(Dispatchers.IO){db.searchNotes(search)};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
        }},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
        Box {
-        OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("Target ▾",fontSize=11.sp)}
+        OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text(notes.firstOrNull{it.id==linkTargetId}?.title?.take(9) ?: "Target ▾",fontSize=11.sp,maxLines=1)}
         DropdownMenu(expanded=linkMenuOpen,onDismissRequest={linkMenuOpen=false}) {
          notes.filter { it.id != selectedId }.forEach { candidate ->
           DropdownMenuItem(text={Text(candidate.title,maxLines=1)},onClick={linkTargetId=candidate.id;linkMenuOpen=false;message="Target relasi: ${candidate.title}"})
