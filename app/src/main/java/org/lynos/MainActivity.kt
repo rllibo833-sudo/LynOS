@@ -133,10 +133,23 @@ private fun LynOSApp(context: Context) {
       Text("NOTES / "+notes.size,color=Muted,fontSize=9.sp,letterSpacing=1.2.sp)
       LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
        items(notes,key={it.id}) { n ->
-        Column(Modifier.fillMaxWidth().border(1.dp,if(editId==n.id)Cyan.copy(alpha=.65f) else Blue.copy(alpha=.25f),RoundedCornerShape(11.dp)).background(Panel,RoundedCornerShape(11.dp)).clickable{title=n.title;body=n.body;editId=n.id;selectedId=n.id}.padding(10.dp)) {
-         Text(n.title,color=Ink,fontSize=12.sp,fontWeight=FontWeight.SemiBold)
-         if(n.body.isNotBlank()) Text(n.body,color=Muted,fontSize=10.sp,maxLines=2)
-         Text("NODE #"+n.id+" · "+SimpleDateFormat("MMM d, HH:mm",Locale.getDefault()).format(Date(n.updatedAt)),color=Cyan,fontSize=8.sp)
+        Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+         Column(Modifier.fillMaxWidth().border(1.dp,if(editId==n.id)Cyan.copy(alpha=.65f) else Blue.copy(alpha=.25f),RoundedCornerShape(11.dp)).background(Panel,RoundedCornerShape(11.dp)).clickable{title=n.title;body=n.body;editId=n.id;selectedId=n.id;message=""}.padding(10.dp)) {
+          Text(n.title,color=Ink,fontSize=12.sp,fontWeight=FontWeight.SemiBold)
+          if(n.body.isNotBlank()) Text(n.body,color=Muted,fontSize=10.sp,maxLines=2)
+          Text("NODE #"+n.id+" · "+SimpleDateFormat("MMM d, HH:mm",Locale.getDefault()).format(Date(n.updatedAt)),color=Cyan,fontSize=8.sp)
+         }
+         if(selectedId==n.id) {
+          OutlinedButton(onClick={scope.launch {
+           try {
+            withContext(Dispatchers.IO){db.deleteNote(n.id)}
+            notes=withContext(Dispatchers.IO){db.searchNotes(search)}
+            if(editId==n.id){title="";body="";editId=null}
+            selectedId=null
+            message="Catatan dihapus. Relasi terkait ikut dibersihkan."
+           } catch(e:Exception) { message=e.message ?: "Catatan gagal dihapus." }
+          }},modifier=Modifier.align(Alignment.End),contentPadding=PaddingValues(horizontal=12.dp,vertical=4.dp)) { Text("Hapus catatan",fontSize=10.sp) }
+         }
         }
        }
       }
