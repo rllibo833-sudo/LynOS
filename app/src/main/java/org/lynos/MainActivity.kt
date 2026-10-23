@@ -75,6 +75,7 @@ private fun LynOSApp(context: Context) {
  var notes by remember { mutableStateOf(emptyList<KnowledgeNote>()) }
  var linkCount by remember { mutableIntStateOf(0) }
  var memoryCount by remember { mutableIntStateOf(0) }
+ var dataRevision by remember { mutableIntStateOf(0) }
  var message by remember { mutableStateOf("") }
  var code by remember { mutableStateOf("jancuk\nucap \"Halo dari Cuk Studio\"\nselesai jancuk") }
  var output by remember { mutableStateOf("Editor prototipe. Runtime .cuk penuh belum terhubung.") }
@@ -87,7 +88,7 @@ private fun LynOSApp(context: Context) {
    delay(1000)
   }
  }
- LaunchedEffect(search,page) {
+ LaunchedEffect(search,page,dataRevision) {
   notes=withContext(Dispatchers.IO) { db.searchNotes(search) }
   linkCount=withContext(Dispatchers.IO) { db.countLinks() }
   memoryCount=withContext(Dispatchers.IO) { db.countNotes() }
@@ -140,7 +141,7 @@ private fun LynOSApp(context: Context) {
        Button(onClick={title="";body="";editId=null;selectedId=null;linkTargetId=null;message=""},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text("New",fontSize=11.sp)}
        Button(onClick={scope.launch {
         if(title.isBlank()) message="Judul catatan wajib diisi."
-        else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;notes=withContext(Dispatchers.IO){db.searchNotes(search)};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
+        else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;dataRevision++;notes=withContext(Dispatchers.IO){db.searchNotes(search)};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
        }},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
        Box {
         OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text(notes.firstOrNull{it.id==linkTargetId}?.title?.take(9) ?: "Target ▾",fontSize=11.sp,maxLines=1)}
@@ -154,7 +155,7 @@ private fun LynOSApp(context: Context) {
         val from=selectedId; val to=linkTargetId
         if(from==null) message="Pilih catatan sumber dahulu."
         else if(to==null || to==from) message="Pilih target relasi yang berbeda dari catatan sumber."
-        else try{withContext(Dispatchers.IO){db.linkNotes(from,to)};message="Relasi tersimpan: #${from} → #${to}";notes=withContext(Dispatchers.IO){db.searchNotes(search)}}catch(e:Exception){message=e.message ?: "Relasi gagal."}
+        else try{withContext(Dispatchers.IO){db.linkNotes(from,to)};dataRevision++;message="Relasi tersimpan: #${from} → #${to}";notes=withContext(Dispatchers.IO){db.searchNotes(search)}}catch(e:Exception){message=e.message ?: "Relasi gagal."}
        }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("Link",fontSize=11.sp)}
       }
       Field(title,{title=it},"Judul catatan",true)
@@ -173,6 +174,8 @@ private fun LynOSApp(context: Context) {
           OutlinedButton(onClick={scope.launch {
            try {
             withContext(Dispatchers.IO){db.deleteNote(n.id)}
+            dataRevision++
+            if(linkTargetId==n.id) linkTargetId=null
             notes=withContext(Dispatchers.IO){db.searchNotes(search)}
             if(editId==n.id){title="";body="";editId=null}
             selectedId=null
