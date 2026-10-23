@@ -10,6 +10,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,14 +20,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,122 +47,71 @@ private val NeuralCyan = Color(0xFF38CFFF)
 private val NightBlue = Color(0xFF527DB8)
 private val SoftText = Color(0xFFE7F0FC)
 private val MutedText = Color(0xFF9EADC2)
-private val Panel = Color(0xFF202F43)
-private val Line = Color(0xFF344960)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = android.graphics.Color.rgb(24, 35, 51)
         window.navigationBarColor = android.graphics.Color.rgb(24, 35, 51)
-        setContent {
-            MaterialTheme {
-                LynHome()
-            }
-        }
+        setContent { MaterialTheme { LynHome() } }
     }
 }
 
 @Composable
 private fun LynHome() {
-    val transition = rememberInfiniteTransition(label = "neural-network")
+    val transition = rememberInfiniteTransition(label = "neural-field")
     val phase by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 5200),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "signal-phase"
+        animationSpec = infiniteRepeatable(tween(7200), repeatMode = RepeatMode.Restart),
+        label = "field-phase"
     )
-
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize().background(MidnightSlate)
-    ) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(MidnightSlate)) {
         val landscape = maxWidth > maxHeight
         Box(Modifier.fillMaxSize()) {
-            Canvas(Modifier.fillMaxSize()) {
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF202F43), MidnightSlate, Color(0xFF131D2A))
-                    )
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(NeuralCyan.copy(alpha = 0.10f), Color.Transparent),
-                        center = Offset(size.width * 0.78f, size.height * 0.24f),
-                        radius = size.minDimension * 0.75f
-                    ),
-                    radius = size.minDimension * 0.75f,
-                    center = Offset(size.width * 0.78f, size.height * 0.24f)
-                )
-            }
-
+            NeuralBackdrop(phase, Modifier.fillMaxSize())
             if (landscape) {
                 Row(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(22.dp)
+                    Modifier.fillMaxSize().padding(start = 26.dp, end = 26.dp, top = 20.dp, bottom = 18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(
-                        modifier = Modifier.weight(1.45f).fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        Modifier.width(maxWidth * 0.36f).fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Header()
-                        Row(
-                            modifier = Modifier.fillMaxWidth().weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(0.82f),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text("LYNOS / COGNITIVE SPACE", color = NeuralCyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-                                Text("Knowledge,\nconnected.", color = SoftText, fontSize = 30.sp, lineHeight = 33.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.7).sp)
-                                Text("A living map for ideas.", color = MutedText, fontSize = 12.sp)
-                                Spacer(Modifier.height(8.dp))
-                                MetricPill("●", "LOCAL-FIRST", Modifier.fillMaxWidth())
-                                MetricPill("↗", "LOW OVERHEAD", Modifier.fillMaxWidth())
-                            }
-                            KnowledgePanel(phase = phase, modifier = Modifier.weight(1.18f).fillMaxSize())
+                        BrandMark()
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Eyebrow("PERSONAL KNOWLEDGE SYSTEM")
+                            Text("Ideas are\nalways connected.", color = SoftText, fontSize = 31.sp, lineHeight = 35.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.8).sp)
+                            Text("A living space for thought.", color = MutedText, fontSize = 12.sp)
                         }
-                        FooterStatus()
+                        SystemStatus()
                     }
-                    Column(
-                        modifier = Modifier.weight(0.85f).fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Text("WORKSPACE", color = SoftText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.5.sp)
-                        Text("Your tools, one layer away", color = MutedText, fontSize = 11.sp)
-                        ModuleCard("01", "Mnemos", "Knowledge graph", "⌘", Modifier.fillMaxWidth().weight(1f))
-                        ModuleCard("02", "Cuk Studio", "Native workspace", "{ }", Modifier.fillMaxWidth().weight(1f))
+                    Box(Modifier.weight(1f).fillMaxSize()) {
+                        NetworkLabels(Modifier.align(Alignment.Center), compact = false)
+                        WorkspaceDock(Modifier.align(Alignment.BottomEnd).padding(bottom = 4.dp))
                     }
                 }
             } else {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Header()
-                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text("LYNOS / COGNITIVE SPACE", color = NeuralCyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.8.sp)
-                        Text("Knowledge, connected.", color = SoftText, fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.6).sp)
-                        Text("A living map for ideas.", color = MutedText, fontSize = 12.sp)
+                Box(Modifier.fillMaxSize().padding(horizontal = 21.dp, vertical = 18.dp)) {
+                    BrandMark(Modifier.align(Alignment.TopStart))
+                    Column(
+                        Modifier.align(Alignment.TopStart).padding(top = 104.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Eyebrow("PERSONAL KNOWLEDGE SYSTEM")
+                        Text("Ideas are\nalways connected.", color = SoftText, fontSize = 29.sp, lineHeight = 32.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.8).sp)
+                        Text("A living space for thought.", color = MutedText, fontSize = 12.sp)
                     }
-                    KnowledgePanel(phase = phase, modifier = Modifier.weight(1f))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        MetricPill("●", "LOCAL-FIRST", Modifier.weight(1f))
-                        MetricPill("↗", "LOW OVERHEAD", Modifier.weight(1f))
+                    NetworkLabels(Modifier.align(Alignment.Center).padding(top = 66.dp), compact = true)
+                    Column(
+                        Modifier.align(Alignment.BottomStart).fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        WorkspaceDock(Modifier.fillMaxWidth())
+                        SystemStatus()
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("WORKSPACE", color = SoftText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp)
-                        Text("02 MODULES", color = NightBlue, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                        ModuleCard("01", "Mnemos", "Knowledge graph", "⌘", Modifier.weight(1f))
-                        ModuleCard("02", "Cuk Studio", "Native workspace", "{ }", Modifier.weight(1f))
-                    }
-                    FooterStatus()
                 }
             }
         }
@@ -172,210 +119,148 @@ private fun LynHome() {
 }
 
 @Composable
-private fun FooterStatus() {
-    Row(
-        modifier = Modifier.fillMaxWidth().background(Color(0x66202F43), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(Modifier.size(6.dp).background(NeuralCyan, CircleShape))
-        Spacer(Modifier.width(8.dp))
-        Text("LYNOS CORE", color = SoftText, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
-        Spacer(Modifier.weight(1f))
-        Text("LOCAL • PROTOTYPE 0.1", color = MutedText, fontSize = 8.sp, letterSpacing = 0.4.sp)
-    }
-}
-
-@Composable
-private fun Header() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .background(Brush.linearGradient(listOf(NeuralCyan.copy(alpha = 0.22f), NightBlue.copy(alpha = 0.22f))), RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Canvas(Modifier.size(23.dp)) {
-                    val c = center
-                    val points = listOf(
-                        Offset(c.x, size.height * 0.12f),
-                        Offset(size.width * 0.15f, size.height * 0.72f),
-                        Offset(size.width * 0.85f, size.height * 0.72f),
-                        Offset(c.x, c.y)
-                    )
-                    drawLine(NeuralCyan, points[0], points[3], 1.4.dp.toPx())
-                    drawLine(NightBlue, points[1], points[3], 1.4.dp.toPx())
-                    drawLine(NightBlue, points[2], points[3], 1.4.dp.toPx())
-                    points.forEach { drawCircle(NeuralCyan, 2.1.dp.toPx(), it) }
-                }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text("LYNOS", color = SoftText, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 2.8.sp)
-                Text("NEURAL INTERFACE", color = MutedText, fontSize = 8.sp, letterSpacing = 1.7.sp)
-            }
-        }
-        Surface(color = Color(0xFF203B50), shape = RoundedCornerShape(50), border = androidx.compose.foundation.BorderStroke(1.dp, NeuralCyan.copy(alpha = 0.18f))) {
-            Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Box(Modifier.size(5.dp).background(NeuralCyan, CircleShape))
-                Text("SYSTEM ONLINE", color = NeuralCyan, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp)
-            }
-        }
-    }
-}
-
-@Composable
-private fun KnowledgePanel(phase: Float, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Color(0xE61D2B3D),
-        shape = RoundedCornerShape(25.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x553F6582))
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("LIVING KNOWLEDGE", color = MutedText, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.8.sp)
-                    Text("Neural field", color = SoftText, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                }
-                Surface(color = Color(0xFF203B50), shape = RoundedCornerShape(9.dp)) {
-                    Text("LIVE", modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp), color = NeuralCyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                }
-            }
-            Box(Modifier.fillMaxWidth().weight(1f).heightIn(min = 112.dp, max = 250.dp)) {
-                NeuralGraph(phase = phase, modifier = Modifier.fillMaxSize())
-                Column(
-                    modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Text("IDEAS FORM", color = SoftText.copy(alpha = 0.85f), fontSize = 9.sp, letterSpacing = 1.5.sp)
-                    Text("CONNECTIONS", color = NeuralCyan, fontSize = 9.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().background(Color(0x662B4056), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("VISUALIZATION", color = MutedText, fontSize = 8.sp, letterSpacing = 1.sp)
-                    Text("Concept network", color = SoftText, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Box(Modifier.size(6.dp).background(NeuralCyan, CircleShape))
-                    Text("SIGNAL ACTIVE", color = NeuralCyan, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MetricPill(symbol: String, label: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .background(Color(0x442C4056), RoundedCornerShape(12.dp))
-            .padding(horizontal = 11.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(symbol, color = NeuralCyan, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = MutedText, fontSize = 8.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp)
-    }
-}
-
-@Composable
-private fun ModuleCard(number: String, title: String, subtitle: String, glyph: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = Color(0xE624354A),
-        shape = RoundedCornerShape(19.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Line.copy(alpha = 0.8f))
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(number, color = NightBlue, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Box(
-                    modifier = Modifier.size(32.dp).background(Color(0xFF203B50), RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(glyph, color = NeuralCyan, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(title, color = SoftText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text(subtitle, color = MutedText, fontSize = 10.sp, lineHeight = 14.sp)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("OPEN MODULE", color = NeuralCyan, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.7.sp)
-                Text("↗", color = NeuralCyan, fontSize = 11.sp)
-            }
-        }
-    }
-}
-
-private data class Node(val x: Float, val y: Float, val radius: Float)
-
-private val graphNodes = listOf(
-    Node(0.08f, 0.48f, 3.0f),
-    Node(0.23f, 0.25f, 4.0f),
-    Node(0.31f, 0.72f, 3.2f),
-    Node(0.49f, 0.48f, 5.0f),
-    Node(0.63f, 0.20f, 3.6f),
-    Node(0.72f, 0.72f, 4.0f),
-    Node(0.91f, 0.42f, 3.4f),
-    Node(0.88f, 0.84f, 2.8f)
-)
-
-private val graphEdges = listOf(
-    0 to 1, 0 to 2, 1 to 2, 1 to 3, 2 to 3,
-    3 to 4, 3 to 5, 4 to 6, 5 to 6, 5 to 7, 6 to 7
-)
-
-@Composable
-private fun NeuralGraph(phase: Float, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val points = graphNodes.map { node -> Offset(node.x * size.width, node.y * size.height) }
-
-        graphEdges.forEachIndexed { index, edge ->
-            val shimmer = (sin((phase * 6.28f + index).toDouble()).toFloat() + 1f) / 2f
+private fun NeuralBackdrop(phase: Float, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        drawRect(Brush.verticalGradient(listOf(Color(0xFF24364D), MidnightSlate, Color(0xFF121C29))))
+        val glowCenter = Offset(size.width * 0.64f, size.height * 0.48f)
+        drawCircle(
+            Brush.radialGradient(listOf(NeuralCyan.copy(alpha = 0.12f), NightBlue.copy(alpha = 0.045f), Color.Transparent), glowCenter, size.maxDimension * 0.72f),
+            size.maxDimension * 0.72f,
+            glowCenter
+        )
+        val points = fieldNodes.map { Offset(it.x * size.width, it.y * size.height) }
+        fieldEdges.forEachIndexed { i, edge ->
+            val wave = (sin(phase * 6.283f + i * 0.73f) + 1f) * 0.5f
             drawLine(
-                color = NightBlue.copy(alpha = 0.28f + 0.34f * shimmer),
+                color = if (i % 5 == 0) NeuralCyan.copy(alpha = 0.17f + wave * 0.3f) else NightBlue.copy(alpha = 0.23f + wave * 0.24f),
                 start = points[edge.first],
                 end = points[edge.second],
-                strokeWidth = 1.1.dp.toPx(),
+                strokeWidth = if (i % 5 == 0) 1.25.dp.toPx() else 0.8.dp.toPx(),
                 cap = StrokeCap.Round
             )
         }
-
-        val signalEdge = (phase * graphEdges.size).toInt().coerceIn(0, graphEdges.lastIndex)
-        val signalProgress = (phase * graphEdges.size) - signalEdge
-        val active = graphEdges[signalEdge]
-        val a = points[active.first]
-        val b = points[active.second]
-        val signal = Offset(a.x + (b.x - a.x) * signalProgress, a.y + (b.y - a.y) * signalProgress)
-        drawCircle(NeuralCyan.copy(alpha = 0.14f), radius = 10.dp.toPx(), center = signal)
-        drawCircle(NeuralCyan, radius = 2.8.dp.toPx(), center = signal)
-
-        graphNodes.forEachIndexed { index, node ->
-            val point = points[index]
-            val pulse = 0.84f + 0.16f * sin((phase * 6.28f + index * 0.8f).toDouble()).toFloat()
-            drawCircle(NeuralCyan.copy(alpha = 0.09f), radius = node.radius * 3.0f * pulse, center = point)
-            drawCircle(
-                color = if (index == 3) Color(0xFFB4F0FF) else NeuralCyan.copy(alpha = 0.92f),
-                radius = node.radius * pulse,
-                center = point
-            )
+        fieldNodes.forEachIndexed { i, node ->
+            val pulse = 0.72f + (sin(phase * 6.283f * node.speed + i * 1.4f) + 1f) * 0.14f
+            val p = points[i]
+            val r = node.radius.dp.toPx()
+            drawCircle(NeuralCyan.copy(alpha = 0.035f), r * 5.2f, p)
+            drawCircle(NeuralCyan.copy(alpha = 0.07f), r * 3.1f * pulse, p)
+            drawCircle(NightBlue.copy(alpha = 0.45f), r * 1.7f, p)
+            drawCircle(if (node.core) Color(0xFFD4F7FF) else NeuralCyan.copy(alpha = 0.9f), r * pulse, p)
         }
+        val scaled = phase * fieldEdges.size
+        val activeIndex = scaled.toInt().coerceIn(0, fieldEdges.lastIndex)
+        val progress = scaled - activeIndex
+        val edge = fieldEdges[activeIndex]
+        val a = points[edge.first]
+        val b = points[edge.second]
+        val signal = Offset(a.x + (b.x - a.x) * progress, a.y + (b.y - a.y) * progress)
+        drawCircle(NeuralCyan.copy(alpha = 0.13f), 13.dp.toPx(), signal)
+        drawCircle(NeuralCyan, 2.5.dp.toPx(), signal)
+    }
+}
+
+private data class FieldNode(val x: Float, val y: Float, val radius: Float, val speed: Float = 1f, val core: Boolean = false)
+private val fieldNodes = listOf(
+    FieldNode(.03f,.40f,1.7f), FieldNode(.08f,.18f,2.0f), FieldNode(.12f,.62f,2.2f),
+    FieldNode(.17f,.34f,2.5f), FieldNode(.19f,.81f,1.7f), FieldNode(.24f,.12f,1.8f),
+    FieldNode(.27f,.51f,3.1f), FieldNode(.30f,.72f,2.0f), FieldNode(.34f,.26f,2.2f),
+    FieldNode(.38f,.43f,1.7f), FieldNode(.41f,.87f,2.1f), FieldNode(.45f,.16f,2.5f),
+    FieldNode(.48f,.61f,4.1f,0.8f,true), FieldNode(.52f,.34f,2.2f), FieldNode(.56f,.78f,2.7f),
+    FieldNode(.60f,.09f,1.8f), FieldNode(.63f,.48f,2.4f), FieldNode(.67f,.26f,2.0f),
+    FieldNode(.70f,.67f,3.0f), FieldNode(.73f,.89f,1.8f), FieldNode(.77f,.40f,2.4f),
+    FieldNode(.80f,.15f,2.1f), FieldNode(.84f,.57f,2.7f), FieldNode(.88f,.31f,1.8f),
+    FieldNode(.91f,.76f,2.3f), FieldNode(.95f,.48f,2.0f), FieldNode(.98f,.18f,1.6f),
+    FieldNode(.36f,.58f,1.5f), FieldNode(.58f,.56f,1.5f), FieldNode(.22f,.44f,1.6f),
+    FieldNode(.75f,.54f,1.5f), FieldNode(.47f,.91f,1.6f)
+)
+private val fieldEdges = listOf(
+    0 to 1,0 to 3,0 to 2,1 to 3,1 to 5,2 to 3,2 to 4,3 to 5,3 to 6,3 to 29,
+    4 to 7,5 to 8,6 to 7,6 to 8,6 to 9,6 to 29,7 to 9,7 to 10,8 to 9,8 to 11,
+    9 to 12,9 to 13,10 to 12,10 to 31,11 to 12,11 to 15,12 to 13,12 to 14,12 to 27,
+    12 to 28,13 to 16,13 to 17,14 to 16,14 to 18,14 to 31,15 to 17,16 to 18,16 to 20,
+    17 to 20,17 to 21,18 to 19,18 to 20,18 to 22,19 to 22,20 to 22,20 to 23,21 to 23,
+    22 to 24,22 to 30,23 to 25,23 to 26,24 to 25,24 to 30,25 to 26,27 to 28,28 to 30
+)
+
+@Composable
+private fun BrandMark(modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(Modifier.size(42.dp).border(1.dp, NeuralCyan.copy(alpha = 0.42f), RoundedCornerShape(14.dp)).background(Color(0x55243F55), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.size(28.dp)) {
+                val c = center
+                val pts = listOf(Offset(c.x, size.height * .12f), Offset(size.width * .14f, size.height * .72f), Offset(size.width * .86f, size.height * .72f), c, Offset(size.width * .84f, size.height * .18f))
+                listOf(0 to 3, 1 to 3, 2 to 3, 3 to 4).forEach { drawLine(NightBlue, pts[it.first], pts[it.second], 1.4.dp.toPx(), cap = StrokeCap.Round) }
+                pts.forEachIndexed { i, p -> drawCircle(if (i == 3) Color(0xFFD4F7FF) else NeuralCyan, if (i == 3) 3.dp.toPx() else 2.dp.toPx(), p) }
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("LYNOS", color = SoftText, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 3.4.sp)
+            Text("NEURAL INTERFACE  /  01", color = MutedText, fontSize = 8.sp, letterSpacing = 1.5.sp)
+        }
+    }
+}
+
+@Composable
+private fun Eyebrow(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        Box(Modifier.width(19.dp).height(1.dp).background(NeuralCyan))
+        Text(text, color = NeuralCyan, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
+    }
+}
+
+@Composable
+private fun NetworkLabels(modifier: Modifier = Modifier, compact: Boolean) {
+    Box(modifier.fillMaxWidth().height(if (compact) 190.dp else 250.dp)) {
+        Column(Modifier.align(Alignment.TopEnd).padding(top = 6.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("SYNAPTIC FIELD", color = SoftText.copy(alpha = 0.78f), fontSize = 8.sp, letterSpacing = 1.8.sp)
+            Text("32 NODES  /  49 LINKS", color = NeuralCyan.copy(alpha = 0.85f), fontSize = 7.sp, letterSpacing = 1.2.sp)
+        }
+        Column(Modifier.align(Alignment.BottomStart).padding(bottom = 7.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("KNOWLEDGE IN MOTION", color = SoftText.copy(alpha = 0.88f), fontSize = 9.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.7.sp)
+            Text("Every thought finds a path.", color = MutedText, fontSize = 10.sp)
+        }
+    }
+}
+
+@Composable
+private fun WorkspaceDock(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.border(1.dp, Color(0x554D7897), RoundedCornerShape(20.dp)).background(Brush.horizontalGradient(listOf(Color(0xDD1A2A3D), Color(0xCC243B51))), RoundedCornerShape(20.dp)).padding(horizontal = 13.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        DockItem("⌘", "MNEMOS", "KNOWLEDGE")
+        Box(Modifier.width(1.dp).height(31.dp).background(Color(0x664D7897)))
+        DockItem("{ }", "CUK STUDIO", "NATIVE TOOLS")
+        Spacer(Modifier.weight(1f, fill = false))
+        Box(Modifier.size(27.dp).border(1.dp, NeuralCyan.copy(alpha = 0.36f), CircleShape), contentAlignment = Alignment.Center) {
+            Text("↗", color = NeuralCyan, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
+private fun DockItem(glyph: String, title: String, subtitle: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(Modifier.size(31.dp).background(Color(0x442C536D), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+            Text(glyph, color = NeuralCyan, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(title, color = SoftText, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.7.sp)
+            Text(subtitle, color = MutedText, fontSize = 7.sp, letterSpacing = 0.7.sp)
+        }
+    }
+}
+
+@Composable
+private fun SystemStatus() {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        Box(Modifier.size(5.dp).background(NeuralCyan, CircleShape))
+        Text("CORE ONLINE", color = NeuralCyan, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp)
+        Box(Modifier.width(1.dp).height(10.dp).background(Color(0x665D7893)))
+        Text("LOCAL-FIRST", color = MutedText, fontSize = 8.sp, letterSpacing = 1.sp)
+        Spacer(Modifier.weight(1f))
+        Text("LYNOS  /  PROTOTYPE 0.1", color = MutedText.copy(alpha = 0.72f), fontSize = 7.sp, letterSpacing = 0.5.sp)
     }
 }
