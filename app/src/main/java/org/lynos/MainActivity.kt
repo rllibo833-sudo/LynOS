@@ -84,7 +84,8 @@ private fun LynOSApp(context: Context) {
  var output by remember { mutableStateOf("Terminal LynOS siap. Ketik `help` untuk perintah yang tersedia.") }
  var commandInput by remember { mutableStateOf("help") }
  var terminalHistory by remember { mutableStateOf(listOf("LYNOS CUK TERMINAL / local workspace commands only")) }
- var reduceMotion by remember { mutableStateOf(true) }
+ val preferences = remember { context.getSharedPreferences("lynos_preferences", Context.MODE_PRIVATE) }
+ var reduceMotion by remember { mutableStateOf(preferences.getBoolean("reduce_motion", true)) }
  var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
  val scope= rememberCoroutineScope()
  LaunchedEffect(Unit) {
@@ -246,7 +247,11 @@ private fun LynOSApp(context: Context) {
          else -> "Perintah tidak dikenal: ${parts[0]}. Ketik help."
         }
        } catch(e:Exception) { "Gagal: ${e.message ?: "operasi tidak berhasil"}" }
-       if(raw.lowercase(Locale.ROOT)!="clear") terminalHistory=(terminalHistory + "> $raw" + result).takeLast(60)
+       if(raw.lowercase(Locale.ROOT)=="clear") {
+        terminalHistory=listOf("LYNOS CUK TERMINAL / local workspace commands only")
+       } else {
+        terminalHistory=(terminalHistory + "> $raw" + result).takeLast(60)
+       }
        output=result
        commandInput=""
       }},modifier=Modifier.height(42.dp)){Text("Run")}
@@ -256,7 +261,10 @@ private fun LynOSApp(context: Context) {
      Text("SYSTEM SETTINGS",color=Cyan,fontWeight=FontWeight.Bold)
      Row(Modifier.fillMaxWidth().background(Panel,RoundedCornerShape(13.dp)).padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
       Column(Modifier.weight(1f)){Text("Reduced motion",color=Ink,fontWeight=FontWeight.SemiBold);Text("Kurangi animasi untuk hemat daya",color=Muted,fontSize=10.sp)}
-      Switch(reduceMotion,{reduceMotion=it})
+      Switch(reduceMotion,{ enabled ->
+       reduceMotion=enabled
+       preferences.edit().putBoolean("reduce_motion",enabled).apply()
+      })
      }
      StatusRow("Database","SQLite offline di perangkat","LOCAL")
      StatusRow("Cloud sync","Belum dikonfigurasi","OFF")
