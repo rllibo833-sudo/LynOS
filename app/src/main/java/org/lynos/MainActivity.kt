@@ -7,6 +7,8 @@ import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Canvas
@@ -81,6 +83,21 @@ private fun LynOSApp(context: Context) {
  var memoryCount by remember { mutableIntStateOf(0) }
  var dataRevision by remember { mutableIntStateOf(0) }
  var message by remember { mutableStateOf("") }
+ var pendingExport by remember { mutableStateOf("") }
+ val jsonExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+  if(uri == null) { message = "Ekspor JSON dibatalkan." }
+  else scope.launch {
+   try { withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingExport.toByteArray(Charsets.UTF_8)) } ?: error("Tidak dapat membuka berkas tujuan.") }; message = "Ekspor JSON berhasil disimpan." }
+   catch(e: Exception) { message = "Ekspor gagal: ${e.message ?: "kesalahan tulis"}" }
+  }
+ }
+ val markdownExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
+  if(uri == null) { message = "Ekspor Markdown dibatalkan." }
+  else scope.launch {
+   try { withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri)?.use { it.write(pendingExport.toByteArray(Charsets.UTF_8)) } ?: error("Tidak dapat membuka berkas tujuan.") }; message = "Ekspor Markdown berhasil disimpan." }
+   catch(e: Exception) { message = "Ekspor gagal: ${e.message ?: "kesalahan tulis"}" }
+  }
+ }
  var code by remember { mutableStateOf("jancuk\nhedeh \"Halo dari Cuk Studio\"\nselesai jancuk") }
  var output by remember { mutableStateOf("Terminal LynOS siap. Ketik `help` untuk perintah yang tersedia.") }
  var commandInput by remember { mutableStateOf("help") }
@@ -175,6 +192,8 @@ private fun LynOSApp(context: Context) {
         if(title.isBlank()) message="Judul catatan wajib diisi."
         else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;dataRevision++;notes=withContext(Dispatchers.IO){db.searchNotes(search)};allNotes=withContext(Dispatchers.IO){db.searchNotes()};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
        }},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
+       OutlinedButton(onClick={scope.launch { try { pendingExport=withContext(Dispatchers.IO){db.exportJson()}; jsonExportLauncher.launch("mnemos-export.json") } catch(e:Exception){message="Ekspor JSON gagal: ${e.message ?: "kesalahan"}"} }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("JSON ↓",fontSize=11.sp)}
+       OutlinedButton(onClick={scope.launch { try { pendingExport=withContext(Dispatchers.IO){db.exportMarkdown()}; markdownExportLauncher.launch("mnemos-export.md") } catch(e:Exception){message="Ekspor Markdown gagal: ${e.message ?: "kesalahan"}"} }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("MD ↓",fontSize=11.sp)}
        Box {
         OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text(allNotes.firstOrNull{it.id==linkTargetId}?.title?.take(9) ?: "Target ▾",fontSize=11.sp,maxLines=1)}
         DropdownMenu(expanded=linkMenuOpen,onDismissRequest={linkMenuOpen=false}) {
