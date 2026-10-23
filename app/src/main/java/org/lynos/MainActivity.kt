@@ -223,7 +223,7 @@ private fun LynOSApp(context: Context) {
        Row(Modifier.fillMaxWidth().border(1.dp,Blue.copy(alpha=.32f),RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).clickable {
         try {
          val launch = context.packageManager.getLaunchIntentForPackage(app.packageName)
-         if(launch != null) context.startActivity(launch) else message = "Android tidak menyediakan tombol buka untuk ${app.label}."
+         if(launch != null) context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) else message = "Android tidak menyediakan tombol buka untuk ${app.label}."
         } catch(e:Exception) { message="Gagal membuka ${app.label}: ${e.message ?: "kesalahan Android"}" }
        }.padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
         androidx.compose.foundation.Image(painter=androidx.compose.ui.graphics.painter.DrawablePainter(app.icon),contentDescription=null,modifier=Modifier.size(36.dp))
