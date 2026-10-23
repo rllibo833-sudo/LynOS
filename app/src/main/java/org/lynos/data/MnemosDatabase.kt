@@ -246,8 +246,102 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
                 append(", \"relation\": ").append(quote(link.third)).append('}')
             }
             if (links.isNotEmpty()) append('\n')
-            append("  ]\n}\n")
+            append("  ]\n    companion object {
+        private const val EXPORT_FORMAT = "lynos-mnemos-export-v1"
+        private const val MAX_IMPORT_BYTES = 10 * 1024 * 1024
+        private const val MAX_IMPORT_NOTES = 50_000
+        private const val MAX_IMPORT_LINKS = 200_000
+        private const val MAX_TITLE_CHARS = 4_096
+        private const val MAX_BODY_CHARS = 1_000_000
+        private const val MAX_RELATION_CHARS = 128
+    }
+
+}\n")
         }
+    }
+
+    data class ImportResult(val notesImported: Int, val linksImported: Int)
+
+    /**
+     * Additive restore for LynOS snapshots. Source IDs are remapped to new local IDs;
+     * all validation occurs before the transaction and all writes commit atomically.
+     */
+    fun importJson(snapshot: String): ImportResult {
+        require(snapshot.isNotBlank()) { "Berkas JSON kosong." }
+        require(snapshot.toByteArray(Charsets.UTF_8).size <= MAX_IMPORT_BYTES) {
+            "Berkas terlalu besar (maksimum 10 MiB)."
+        }
+        val root = JSONObject(snapshot)
+        require(root.optString("format") == EXPORT_FORMAT) {
+            "Format tidak didukung. Gunakan snapshot $EXPORT_FORMAT."
+        }
+        val noteArray = root.optJSONArray("notes") ?: error("Daftar notes tidak ditemukan.")
+        val linkArray = root.optJSONArray("links") ?: error("Daftar links tidak ditemukan.")
+        require(noteArray.length() <= MAX_IMPORT_NOTES) { "Terlalu banyak catatan dalam satu impor." }
+        require(linkArray.length() <= MAX_IMPORT_LINKS) { "Terlalu banyak relasi dalam satu impor." }
+
+        data class IncomingNote(val sourceId: Long, val title: String, val body: String, val updatedAt: Long)
+        data class IncomingLink(val sourceId: Long, val targetId: Long, val relation: String)
+        val incomingNotes = ArrayList<IncomingNote>(noteArray.length())
+        val sourceIds = HashSet<Long>()
+        for (i in 0 until noteArray.length()) {
+            val item = noteArray.optJSONObject(i) ?: error("Catatan ke-$i bukan objek JSON.")
+            val sourceId = item.optLong("id", -1L)
+            val title = item.optString("title", "").trim()
+            val body = item.optString("body", "")
+            val updatedAt = item.optLong("updatedAt", System.currentTimeMillis())
+            require(sourceId > 0L) { "ID sumber catatan ke-$i tidak valid." }
+            require(sourceIds.add(sourceId)) { "ID sumber catatan duplikat: $sourceId." }
+            require(title.isNotBlank() && title.length <= MAX_TITLE_CHARS) {
+                "Judul catatan ke-$i kosong atau terlalu panjang."
+            }
+            require(body.length <= MAX_BODY_CHARS) { "Isi catatan ke-$i terlalu panjang." }
+            incomingNotes.add(IncomingNote(sourceId, title, body, updatedAt.coerceAtLeast(0L)))
+        }
+
+        val incomingLinks = ArrayList<IncomingLink>(linkArray.length())
+        for (i in 0 until linkArray.length()) {
+            val item = linkArray.optJSONObject(i) ?: error("Relasi ke-$i bukan objek JSON.")
+            val source = item.optLong("sourceId", -1L)
+            val target = item.optLong("targetId", -1L)
+            val relation = item.optString("relation", "related").trim().ifBlank { "related" }
+            require(source != target && sourceIds.contains(source) && sourceIds.contains(target)) {
+                "Endpoint relasi ke-$i tidak cocok dengan catatan dalam snapshot."
+            }
+            require(relation.length <= MAX_RELATION_CHARS) { "Label relasi ke-$i terlalu panjang." }
+            incomingLinks.add(IncomingLink(source, target, relation))
+        }
+
+        val db = writableDatabase
+        val idMap = HashMap<Long, Long>(incomingNotes.size)
+        var linksImported = 0
+        db.beginTransaction()
+        try {
+            incomingNotes.forEach { note ->
+                val values = ContentValues().apply {
+                    put("title", note.title)
+                    put("body", note.body)
+                    put("updated_at", note.updatedAt)
+                }
+                idMap[note.sourceId] = db.insertOrThrow("notes", null, values)
+            }
+            incomingLinks.forEach { link ->
+                val first = minOf(idMap.getValue(link.sourceId), idMap.getValue(link.targetId))
+                val second = maxOf(idMap.getValue(link.sourceId), idMap.getValue(link.targetId))
+                val values = ContentValues().apply {
+                    put("source_id", first)
+                    put("target_id", second)
+                    put("relation", link.relation)
+                }
+                if (db.insertWithOnConflict("links", null, values, SQLiteDatabase.CONFLICT_IGNORE) != -1L) {
+                    linksImported++
+                }
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+        return ImportResult(incomingNotes.size, linksImported)
     }
 
     /**
