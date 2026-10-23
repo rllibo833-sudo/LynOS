@@ -16,7 +16,7 @@ The source of truth is [Mnemos_ Jaringan Pengetahuan Futuristik.png](./Mnemos_%2
 - Kotlin + Jetpack Compose; no Flutter, Dart, Termux or cloud requirement for the local shell.
 - Minimum Android API 26; SDK 35; Java 17.
 - Home includes navigation to Mnemos, Cuk Studio, Settings and device Status.
-- Mnemos uses SQLite on-device for notes, search and note-to-note links. Note updates fail explicitly if the referenced row disappeared; undirected relations use canonical endpoint ordering to avoid reversed duplicate edges. Database schema version 2 migrates legacy graph links by canonicalizing endpoint order, normalizing blank relations, and discarding self-links/duplicates. Related-note queries deduplicate results and exclude the selected note itself. Search input treats `%` and `_` literally instead of allowing them to act as SQL wildcards. Dashboard totals reload after successful note saves, links and deletions. Migration behavior still needs device/database-level verification.
+- Mnemos uses SQLite on-device for notes, search and note-to-note links. Note updates fail explicitly if the referenced row disappeared; undirected relations use canonical endpoint ordering to avoid reversed duplicate edges. Database schema version 2 migrates legacy graph links by canonicalizing endpoint order, normalizing blank relations, and discarding self-links/duplicates. Related-note queries deduplicate results and exclude the selected note itself. Search input treats `%` and `_` literally instead of allowing them to act as SQL wildcards. Link creation now validates both note endpoints inside a database transaction and rejects relation labels longer than 128 characters; duplicate undirected links remain idempotent. Dashboard totals reload after successful note saves, links and deletions. Migration and query behavior still need device/database-level verification.
 - Cuk Studio currently has an editor and a source-wrapper check only. **It does not yet execute the full .cuk language runtime.** Integration with the native PusingCuk runtime remains required.
 - Cloud sync is not implemented. The app remains local-first.
 - Status shows Android-reported battery level and local time. LynOS does not read notifications from other apps; that requires explicit Notification Listener access, which is not implemented.
@@ -40,6 +40,6 @@ Open the project in Android Studio with Android SDK 35 installed and sync the Gr
 
 1. Verify latest CI build, artifact signatures and install/launch on a real Android device.
 2. Test Mnemos save/search/link across app restarts and improve relationship navigation/deletion.
-3. Integrate the actual native PusingCuk runtime rather than treating source validation as execution.
+3. Integrate the actual native PusingCuk runtime rather than treating source validation as execution. The upstream Android Studio app bundles a C executable for Android ABIs, but LynOS must build/package that runtime for its own app and expose it through a constrained execution interface; copying the desktop C source or reusing the editor alone is not integration.
 4. Add a persistent private release-signing workflow for safe updates.
 5. Compare screenshots against the reference and measure animation performance on the target phone.
