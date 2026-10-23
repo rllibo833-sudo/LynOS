@@ -193,4 +193,103 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
             }
         }
     }
+
+    /**
+     * Portable, dependency-free JSON snapshot of notes and undirected relations.
+     * Returns data only; the caller chooses Android's document picker or another
+     * explicit destination for writing the export.
+     */
+    fun exportJson(): String {
+        val notes = searchNotes("").sortedBy { it.id }
+        val links = readableDatabase.rawQuery(
+            "SELECT source_id, target_id, relation FROM links ORDER BY source_id, target_id, relation",
+            null
+        ).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(Triple(cursor.getLong(0), cursor.getLong(1), cursor.getString(2)))
+                }
+            }
+        }
+        fun quote(value: String): String = buildString {
+            append('"')
+            value.forEach { ch ->
+                when (ch) {
+                    '"' -> append("\\\"")
+                    '\\' -> append("\\\\")
+                    '\b' -> append("\\b")
+                    '\u000C' -> append("\\f")
+                    '\n' -> append("\\n")
+                    '\r' -> append("\\r")
+                    '\t' -> append("\\t")
+                    else -> if (ch.code < 0x20) append("\\u%04x".format(ch.code)) else append(ch)
+                }
+            }
+            append('"')
+        }
+        return buildString {
+            append("{\n  \"format\": \"mnemos-export-v1\",\n  \"notes\": [")
+            notes.forEachIndexed { index, note ->
+                append(if (index == 0) "\n" else ",\n")
+                append("    {\"id\": ").append(note.id)
+                append(", \"title\": ").append(quote(note.title))
+                append(", \"body\": ").append(quote(note.body))
+                append(", \"updatedAt\": ").append(note.updatedAt).append('}')
+            }
+            if (notes.isNotEmpty()) append('\n')
+            append("  ],\n  \"links\": [")
+            links.forEachIndexed { index, link ->
+                append(if (index == 0) "\n" else ",\n")
+                append("    {\"sourceId\": ").append(link.first)
+                append(", \"targetId\": ").append(link.second)
+                append(", \"relation\": ").append(quote(link.third)).append('}')
+            }
+            if (links.isNotEmpty()) append('\n')
+            append("  ]\n}\n")
+        }
+    }
+
+    /**
+     * Human-readable Markdown snapshot. Link IDs are retained so repeated titles
+     * remain distinguishable and the relation list can be reconciled with JSON.
+     */
+    fun exportMarkdown(): String {
+        val notes = searchNotes("").sortedBy { it.id }
+        val links = readableDatabase.rawQuery(
+            "SELECT source_id, target_id, relation FROM links ORDER BY source_id, target_id, relation",
+            null
+        ).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(Triple(cursor.getLong(0), cursor.getLong(1), cursor.getString(2)))
+                }
+            }
+        }
+        fun escapeCell(value: String) = value.replace("\\", "\\\\")
+            .replace("|", "\\|").replace("\r", "").replace("\n", "<br>")
+        return buildString {
+            append("# Mnemos export\n\n")
+            append("Format: `mnemos-export-v1`  \n")
+            append("Exported at: ").append(System.currentTimeMillis()).append(" (Unix milliseconds)\n\n")
+            append("## Notes\n\n")
+            if (notes.isEmpty()) append("_No notes._\n")
+            notes.forEach { note ->
+                append("### ").append(note.title.replace("\r", "").replace("\n", " ")).append(" (ID ")
+                    .append(note.id).append(")\n\n")
+                append(note.body.ifBlank { "_Empty note._" }).append("\n\n")
+                append("_Updated at: ").append(note.updatedAt).append("_\n\n")
+            }
+            append("## Relations\n\n")
+            if (links.isEmpty()) append("_No relations._\n")
+            else {
+                append("| Source ID | Relation | Target ID |\n|---:|---|---:|\n")
+                links.forEach { link ->
+                    append("| ").append(link.first).append(" | ")
+                        .append(escapeCell(link.third)).append(" | ")
+                        .append(link.second).append(" |\n")
+                }
+            }
+        }
+    }
+
 }
