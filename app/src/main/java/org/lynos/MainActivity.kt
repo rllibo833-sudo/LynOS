@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -119,12 +120,12 @@ private fun LynOSApp(context: Context) {
        Button(onClick={scope.launch {
         if(title.isBlank()) message="Judul catatan wajib diisi."
         else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;notes=withContext(Dispatchers.IO){db.searchNotes(search)};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
-       },contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
+       }},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
        OutlinedButton(onClick={scope.launch {
         val from=selectedId; val to=notes.firstOrNull{it.id!=from}?.id
         if(from==null||to==null) message="Pilih catatan dan buat catatan kedua dahulu."
         else try{withContext(Dispatchers.IO){db.linkNotes(from,to)};message="Relasi antar-node tersimpan."}catch(e:Exception){message=e.message ?: "Relasi gagal."}
-       },contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("Link",fontSize=11.sp)}
+       }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("Link",fontSize=11.sp)}
       }
       Field(title,{title=it},"Judul catatan",true)
       Field(body,{body=it},"Isi catatan / pengetahuan…",false,Modifier.fillMaxWidth().height(76.dp))
