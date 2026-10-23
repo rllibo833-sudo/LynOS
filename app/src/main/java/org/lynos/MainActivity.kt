@@ -306,7 +306,7 @@ private fun LynOSApp(context: Context) {
 }
 @Composable private fun NeuralBackdrop(modifier:Modifier,reduced:Boolean){
  val transition=androidx.compose.animation.core.rememberInfiniteTransition(label="neural")
- val phase by transition.animateFloat(0f,1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)26000 else 12000)),label="phase")
+ val phase by transition.animateFloat(0f,if(reduced)0f else 1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)26000 else 12000)),label="phase")
  Canvas(modifier){
   drawRect(Brush.verticalGradient(listOf(Navy,Slate,Color(0xFF111A27))))
   val center=Offset(size.width*.67f,size.height*.48f)
@@ -318,7 +318,7 @@ private fun LynOSApp(context: Context) {
 }
 @Composable private fun NeuralLandscape(modifier:Modifier,reduced:Boolean){
  val transition=androidx.compose.animation.core.rememberInfiniteTransition(label="landscape")
- val phase by transition.animateFloat(0f,1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)30000 else 15000)),label="landscapePhase")
+ val phase by transition.animateFloat(0f,if(reduced)0f else 1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)30000 else 15000)),label="landscapePhase")
  Canvas(modifier){
   val w=size.width; val h=size.height
   val corner=androidx.compose.ui.geometry.CornerRadius(22.dp.toPx())
