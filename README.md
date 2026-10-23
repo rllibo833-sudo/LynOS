@@ -8,7 +8,7 @@ The source of truth is [Mnemos_ Jaringan Pengetahuan Futuristik.png](./Mnemos_%2
 
 - Midnight Slate `#182333`, Deep Navy `#24364D`, Neural Cyan `#38CFFF`, Night Blue `#527DB8`.
 - Neural scene is rendered natively with Jetpack Compose Canvas: atmospheric background, perspective guides, curved graph connections, pulsing hubs and subtle near-field particles.
-- The scene honors the Reduced motion setting with slower/steadier animation; the visual remains an early approximation until screenshot comparison and target-device profiling are completed.
+- The Reduced motion preference is persisted on-device and freezes the animated scene into a static composition. The visual remains an early approximation until screenshot comparison and target-device profiling are completed.
 - Home dashboard memory and relation totals are read from the on-device SQLite database; no sample statistics are fabricated.
 
 ## Native implementation
@@ -41,5 +41,6 @@ Open the project in Android Studio with Android SDK 35 installed and sync the Gr
 1. Verify latest CI build, artifact signatures and install/launch on a real Android device.
 2. Test Mnemos save/search/link across app restarts and improve relationship navigation/deletion.
 3. Decide and implement a safe local `.cuk` execution backend for Cuk Studio; until that exists, keep terminal capabilities clearly scoped to LynOS workspace commands and never label source checks as execution.
-4. Add a persistent private release-signing workflow for safe updates.
-5. Compare screenshots against the reference and measure animation performance on the target phone.
+4. Improve relationship navigation in Mnemos, including opening a connected note directly and unlinking a relation without deleting either note.
+5. Add a persistent private release-signing workflow for safe updates.
+6. Compare screenshots against the reference and measure animation performance on the target phone.
