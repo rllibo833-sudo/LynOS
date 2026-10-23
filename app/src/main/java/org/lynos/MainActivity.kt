@@ -73,6 +73,7 @@ private fun LynOSApp(context: Context) {
  var linkMenuOpen by remember { mutableStateOf(false) }
  var notes by remember { mutableStateOf(emptyList<KnowledgeNote>()) }
  var linkCount by remember { mutableIntStateOf(0) }
+ var memoryCount by remember { mutableIntStateOf(0) }
  var message by remember { mutableStateOf("") }
  var code by remember { mutableStateOf("jancuk\nucap \"Halo dari Cuk Studio\"\nselesai jancuk") }
  var output by remember { mutableStateOf("Editor prototipe. Runtime .cuk penuh belum terhubung.") }
@@ -81,6 +82,7 @@ private fun LynOSApp(context: Context) {
  LaunchedEffect(search,page) {
   notes=withContext(Dispatchers.IO) { db.searchNotes(search) }
   linkCount=withContext(Dispatchers.IO) { db.countLinks() }
+  memoryCount=withContext(Dispatchers.IO) { db.countNotes() }
  }
  Box(Modifier.fillMaxSize().background(Slate)) {
   NeuralBackdrop(Modifier.fillMaxSize(),reduceMotion)
@@ -106,9 +108,9 @@ private fun LynOSApp(context: Context) {
      Text("Thoughts form\na living network.",color=Ink,fontSize=30.sp,lineHeight=34.sp,fontWeight=FontWeight.SemiBold)
      Text("A quiet workspace for ideas, code, and connections.",color=Muted,fontSize=11.sp)
      NeuralLandscape(Modifier.fillMaxWidth().weight(1f).heightIn(min=150.dp))
-     Text("MNEMOS FIELD  ·  "+notes.size+" notes stored on device",color=Ink,fontSize=10.sp)
+     Text("MNEMOS FIELD  ·  "+memoryCount+" notes stored on device",color=Ink,fontSize=10.sp)
      Row(horizontalArrangement=Arrangement.spacedBy(7.dp)) {
-      MetricCard("MEMORIES", notes.size.toString(), "Saved locally", Modifier.weight(1f))
+      MetricCard("MEMORIES", memoryCount.toString(), "Saved locally", Modifier.weight(1f))
       MetricCard("RELATIONS", linkCount.toString(), "Knowledge links", Modifier.weight(1f))
       MetricCard("STORAGE", "LOCAL", "SQLite offline", Modifier.weight(1f))
      }
