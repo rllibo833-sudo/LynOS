@@ -241,6 +241,35 @@ private fun LynOSApp(context: Context) {
   pts.forEachIndexed{i,p->val pulse=if(reduced)1f else .8f+.2f*sin(phase*6.283f+i);drawCircle(Cyan.copy(alpha=.04f),8.dp.toPx()*pulse,p);drawCircle(if(i%7==0)Color(0xFFD4F7FF)else Cyan.copy(alpha=.8f),(1.2f+(i%3)*.4f).dp.toPx()*pulse,p)}
  }
 }
-@Composable private fun NeuralLandscape(modifier:Modifier){NeuralBackdrop(modifier,true)}
+@Composable private fun NeuralLandscape(modifier:Modifier){
+ val transition=androidx.compose.animation.core.rememberInfiniteTransition(label="landscape")
+ val phase by transition.animateFloat(0f,1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(18000)),label="landscapePhase")
+ Canvas(modifier){
+  val w=size.width; val h=size.height
+  drawRoundRect(Brush.verticalGradient(listOf(Color(0xDD263A50),Color(0xC8172638),Color(0xE8111C2A))),cornerRadius=androidx.compose.ui.geometry.CornerRadius(22.dp.toPx()))
+  drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha=.16f),Blue.copy(alpha=.06f),Color.Transparent),Offset(w*.51f,h*.50f),w*.48f),w*.48f,Offset(w*.51f,h*.50f))
+  val pts=nodePoints.map{Offset(w*(.04f+it.first*.92f),h*(.08f+it.second*.84f))}
+  nodeEdges.forEachIndexed{i,e->
+   val a=pts[e.first]; val b=pts[e.second]
+   val dx=b.x-a.x; val dy=b.y-a.y
+   val bend=Offset((a.x+b.x)/2f-dy*.10f,(a.y+b.y)/2f+dx*.10f)
+   val path=androidx.compose.ui.graphics.Path().apply{moveTo(a.x,a.y);quadraticTo(bend.x,bend.y,b.x,b.y)}
+   drawPath(path,if(i%5==0)Cyan.copy(alpha=.48f)else Blue.copy(alpha=.28f),style=androidx.compose.ui.graphics.drawscope.Stroke(width=if(i%5==0)1.1.dp.toPx() else .65.dp.toPx(),cap=StrokeCap.Round))
+  }
+  val hubs=listOf(Offset(w*.24f,h*.34f),Offset(w*.51f,h*.50f),Offset(w*.76f,h*.65f))
+  hubs.forEachIndexed{i,p->
+   val pulse=.88f+.12f*sin(phase*6.283f+i)
+   drawCircle(Cyan.copy(alpha=.07f),18.dp.toPx()*pulse,p)
+   drawCircle(Cyan.copy(alpha=.12f),9.dp.toPx()*pulse,p)
+   drawCircle(Color(0xFFD9F8FF),2.6.dp.toPx(),p)
+  }
+  pts.forEachIndexed{i,p->
+   val active=i%6==0
+   drawCircle(Cyan.copy(alpha=if(active).13f else .055f),if(active)8.dp.toPx() else 4.dp.toPx(),p)
+   drawCircle(if(active)Color(0xFFD9F8FF)else Cyan.copy(alpha=.86f),if(active)1.8.dp.toPx() else 1.dp.toPx(),p)
+  }
+  drawRoundRect(Color.White.copy(alpha=.035f),topLeft=Offset(1.dp.toPx(),1.dp.toPx()),size=androidx.compose.ui.geometry.Size(w-2.dp.toPx(),h-2.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(22.dp.toPx()),style=androidx.compose.ui.graphics.drawscope.Stroke(width=1.dp.toPx()))
+ }
+}
 private val nodePoints=listOf(.02f to .40f,.06f to .15f,.09f to .73f,.14f to .31f,.16f to .55f,.20f to .86f,.23f to .11f,.26f to .39f,.29f to .65f,.32f to .22f,.35f to .49f,.38f to .82f,.41f to .12f,.44f to .34f,.47f to .62f,.50f to .87f,.53f to .21f,.56f to .46f,.59f to .72f,.62f to .10f,.65f to .36f,.68f to .57f,.71f to .84f,.74f to .22f,.77f to .43f,.80f to .66f,.83f to .12f,.86f to .34f,.89f to .56f,.92f to .81f,.96f to .25f,.99f to .49f)
 private val nodeEdges=listOf(0 to 1,0 to 2,0 to 3,1 to 3,1 to 6,2 to 4,2 to 5,3 to 4,3 to 6,3 to 7,4 to 7,4 to 8,5 to 8,6 to 7,6 to 9,7 to 8,7 to 9,7 to 10,8 to 10,8 to 11,9 to 10,9 to 12,10 to 11,10 to 13,10 to 14,11 to 14,11 to 15,12 to 13,12 to 16,13 to 14,13 to 16,14 to 15,14 to 16,14 to 17,15 to 18,15 to 19,16 to 17,16 to 19,17 to 18,17 to 20,18 to 19,18 to 21,18 to 22,19 to 22,20 to 21,20 to 23,21 to 22,21 to 23,21 to 24,22 to 24,22 to 25,22 to 26,23 to 24,23 to 26,24 to 25,24 to 27,25 to 26,25 to 28,26 to 28,26 to 29,27 to 28,27 to 30,28 to 29,28 to 30,29 to 31,30 to 31)
