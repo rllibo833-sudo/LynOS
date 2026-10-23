@@ -16,7 +16,7 @@ data class KnowledgeNote(
  * Offline-first storage for Mnemos. Notes are durable on-device; a future sync
  * layer can use stable IDs and updatedAt without making the app depend on a server.
  */
-class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", null, 2) {
+class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", null, 3) {
     override fun onConfigure(db: SQLiteDatabase) {
         super.onConfigure(db)
         db.setForeignKeyConstraintsEnabled(true)
@@ -41,6 +41,7 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
                 FOREIGN KEY(target_id) REFERENCES notes(id) ON DELETE CASCADE
             )""".trimIndent()
         )
+        createIndexes(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -69,6 +70,15 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
             db.execSQL("DROP TABLE links")
             db.execSQL("ALTER TABLE links_v2 RENAME TO links")
         }
+        if (oldVersion < 3) createIndexes(db)
+    }
+
+    private fun createIndexes(db: SQLiteDatabase) {
+        // Recent-note listing and graph traversal should remain responsive as the
+        // local knowledge base grows. The primary key already indexes source_id.
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_notes_updated_at ON notes(updated_at DESC)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_links_target_id ON links(target_id)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_links_relation ON links(relation)")
     }
 
     fun saveNote(title: String, body: String, id: Long? = null): Long {
