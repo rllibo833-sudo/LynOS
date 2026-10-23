@@ -13,6 +13,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -141,7 +142,7 @@ private fun LynOSApp(context: Context) {
      Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(7.dp)) {
       Text("MNEMOS / KNOWLEDGE GRAPH",color=Cyan,fontSize=10.sp,fontWeight=FontWeight.Bold)
       Field(search,{search=it},"Search notes…",true)
-      Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+      Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
        Button(onClick={title="";body="";editId=null;selectedId=null;linkTargetId=null;message=""},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text("New",fontSize=11.sp)}
        Button(onClick={scope.launch {
         if(title.isBlank()) message="Judul catatan wajib diisi."
