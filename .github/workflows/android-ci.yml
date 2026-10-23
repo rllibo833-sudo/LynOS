@@ -1,10 +1,7 @@
 name: Android CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # Builds are intentionally manual while LynOS UI/backend are under active development.
   workflow_dispatch:
 
 permissions:
