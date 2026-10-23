@@ -78,7 +78,9 @@ private fun LynOSApp(context: Context) {
  var dataRevision by remember { mutableIntStateOf(0) }
  var message by remember { mutableStateOf("") }
  var code by remember { mutableStateOf("jancuk\nhedeh \"Halo dari Cuk Studio\"\nselesai jancuk") }
- var output by remember { mutableStateOf("Editor prototipe. Runtime .cuk penuh belum terhubung.") }
+ var output by remember { mutableStateOf("Terminal LynOS siap. Ketik `help` untuk perintah yang tersedia.") }
+ var commandInput by remember { mutableStateOf("help") }
+ var terminalHistory by remember { mutableStateOf(listOf("LYNOS CUK TERMINAL / local workspace commands only")) }
  var reduceMotion by remember { mutableStateOf(true) }
  var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
  val scope= rememberCoroutineScope()
@@ -192,23 +194,59 @@ private fun LynOSApp(context: Context) {
       }
      }
     }
-    Page.CUK -> Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(9.dp)) {
-     Text("CUK STUDIO / EDITOR",color=Cyan,fontSize=10.sp,fontWeight=FontWeight.Bold)
-     Text("Editor lokal prototipe; runtime bahasa penuh belum tersambung.",color=Muted,fontSize=10.sp)
-     Box(Modifier.weight(1f).fillMaxWidth().border(1.dp,Blue.copy(alpha=.4f),RoundedCornerShape(13.dp)).background(Color(0xFF111D2A),RoundedCornerShape(13.dp)).padding(11.dp)) {
-      BasicTextField(code,{code=it},Modifier.fillMaxSize(),textStyle=TextStyle(color=Color(0xFFBFEFFF),fontSize=12.sp,lineHeight=18.sp))
+    Page.CUK -> Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(7.dp)) {
+     Text("CUK STUDIO / TERMINAL",color=Cyan,fontSize=10.sp,fontWeight=FontWeight.Bold)
+     Text("Editor .cuk + perintah workspace lokal. Ini bukan shell OS dan belum mengeksekusi source .cuk.",color=Muted,fontSize=9.sp,lineHeight=13.sp)
+     Text("SOURCE EDITOR",color=Muted,fontSize=8.sp,fontWeight=FontWeight.Bold)
+     Box(Modifier.weight(0.78f).fillMaxWidth().border(1.dp,Blue.copy(alpha=.4f),RoundedCornerShape(13.dp)).background(Color(0xFF111D2A),RoundedCornerShape(13.dp)).padding(9.dp)) {
+      BasicTextField(code,{code=it},Modifier.fillMaxSize(),textStyle=TextStyle(color=Color(0xFFBFEFFF),fontSize=11.sp,lineHeight=16.sp))
      }
-     Button(onClick={
-      val lines = code.lines().map { it.trim() }.filter { it.isNotEmpty() }
-      output = when {
-       lines.size < 3 -> "Gagal: source harus berisi wrapper dan minimal satu baris program."
-       lines.first() != "jancuk" -> "Gagal pada baris 1: source harus diawali jancuk."
-       lines.last() != "selesai jancuk" -> "Gagal: baris terakhir yang berisi teks harus selesai jancuk."
-       lines.drop(1).dropLast(1).any { it == "jancuk" || it == "selesai jancuk" } -> "Peringatan: wrapper berulang terdeteksi; pemeriksaan ini belum mem-parsing bahasa .cuk."
-       else -> "Wrapper source valid. Pemeriksaan struktur saja—bukan parsing atau eksekusi runtime .cuk."
-      }
-     },modifier=Modifier.fillMaxWidth()){Text("Check source")}
-     Text(output,color=Ink,fontSize=11.sp)
+     Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
+      Button(onClick={
+       val lines = code.lines().map { it.trim() }.filter { it.isNotEmpty() }
+       output = when {
+        lines.size < 3 -> "Source ditolak: butuh wrapper dan minimal satu baris program."
+        lines.first() != "jancuk" -> "Source ditolak: baris pertama harus jancuk."
+        lines.last() != "selesai jancuk" -> "Source ditolak: baris terakhir harus selesai jancuk."
+        lines.drop(1).dropLast(1).any { it == "jancuk" || it == "selesai jancuk" } -> "Wrapper berulang terdeteksi."
+        else -> "Struktur wrapper valid. Source BELUM dieksekusi; runtime .cuk belum terhubung."
+       }
+       terminalHistory = (terminalHistory + "> check-source" + output).takeLast(60)
+      },modifier=Modifier.weight(1f)){Text("Check source",fontSize=11.sp)}
+      OutlinedButton(onClick={code="jancuk\\nhedeh \\"Halo dari Cuk Studio\\"\\nselesai jancuk";output="Template .cuk dimuat.",terminalHistory=terminalHistory+"> template halo"},modifier=Modifier.weight(1f)){Text("Template",fontSize=11.sp)}
+     }
+     Text("TERMINAL",color=Muted,fontSize=8.sp,fontWeight=FontWeight.Bold)
+     LazyColumn(Modifier.weight(0.55f).fillMaxWidth().border(1.dp,Blue.copy(alpha=.35f),RoundedCornerShape(10.dp)).background(Color(0xFF0D1722),RoundedCornerShape(10.dp)).padding(8.dp),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+      items(terminalHistory.takeLast(12)) { line -> Text(line,color=if(line.startsWith(">")) Cyan else Ink,fontSize=9.sp,lineHeight=12.sp) }
+     }
+     Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
+      Field(commandInput,{commandInput=it},"help / notes / find teks",true,Modifier.weight(1f))
+      Button(onClick={
+       val raw=commandInput.trim()
+       val parts=raw.split(" ",limit=2)
+       val result=try {
+        when(parts.firstOrNull()?.lowercase(Locale.ROOT)) {
+         "",null -> "Perintah kosong. Ketik help."
+         "help" -> "Perintah: help, date, status, notes, links, find <teks>, note <judul> :: <isi>, clear. Perintah lokal LynOS; bukan shell OS."
+         "date" -> SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.getDefault()).format(Date(System.currentTimeMillis()))
+         "status" -> "LynOS local-first | notes=${withContext(Dispatchers.IO){db.countNotes()}} | links=${withContext(Dispatchers.IO){db.countLinks()}}"
+         "notes" -> withContext(Dispatchers.IO){db.searchNotes()}.take(8).let { found -> if(found.isEmpty()) "Belum ada catatan." else found.joinToString("\\n") { "#${it.id} ${it.title}" } }
+         "links" -> "Relasi tersimpan: ${withContext(Dispatchers.IO){db.countLinks()}}"
+         "find" -> if(parts.size<2 || parts[1].isBlank()) "Pakai: find <teks>" else withContext(Dispatchers.IO){db.searchNotes(parts[1])}.take(8).let { found -> if(found.isEmpty()) "Tidak ditemukan." else found.joinToString("\\n") { "#${it.id} ${it.title}" } }
+         "note" -> {
+          val payload=raw.substringAfter(" ", "").split("::",limit=2)
+          if(payload.size<2 || payload[0].isBlank()) "Pakai: note Judul :: isi catatan"
+          else { val id=withContext(Dispatchers.IO){db.saveNote(payload[0].trim(),payload[1].trim())}; dataRevision++; "Catatan #$id disimpan ke Mnemos." }
+         }
+         "clear" -> { terminalHistory=emptyList(); "Terminal dibersihkan." }
+         else -> "Perintah tidak dikenal: ${parts[0]}. Ketik help."
+        }
+       } catch(e:Exception) { "Gagal: ${e.message ?: "operasi tidak berhasil"}" }
+       if(raw.lowercase(Locale.ROOT)!="clear") terminalHistory=(terminalHistory + "> $raw" + result).takeLast(60)
+       output=result
+       commandInput=""
+      },modifier=Modifier.height(42.dp)){Text("Run")}
+     }
     }
     Page.SETTINGS -> Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(13.dp)) {
      Text("SYSTEM SETTINGS",color=Cyan,fontWeight=FontWeight.Bold)
