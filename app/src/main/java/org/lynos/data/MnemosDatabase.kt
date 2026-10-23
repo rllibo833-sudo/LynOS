@@ -238,9 +238,18 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
                 append(", \"updatedAt\": ").append(note.updatedAt).append('}')
             }
             if (notes.isNotEmpty()) append('\n')
+            append("  ],\n  \"links\": [")
+            links.forEachIndexed { index, link ->
+                append(if (index == 0) "\n" else ",\n")
+                append("    {\"sourceId\": ").append(link.first)
+                append(", \"targetId\": ").append(link.second)
+                append(", \"relation\": ").append(quote(link.third)).append('}')
+            }
+            if (links.isNotEmpty()) append('\n')
             append("  ]\n}\n")
         }
     }
+
 
     data class ImportResult(val notesImported: Int, val linksImported: Int)
 
