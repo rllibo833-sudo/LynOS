@@ -39,8 +39,7 @@ Open the project in Android Studio with Android SDK 35 installed and sync the Gr
 ## Remaining acceptance work
 
 1. Verify latest CI build, artifact signatures and install/launch on a real Android device.
-2. Test Mnemos save/search/link across app restarts and improve relationship navigation/deletion.
+2. Test Mnemos save/search/link/unlink across app restarts, including filtered searches and stale selections.
 3. Decide and implement a safe local `.cuk` execution backend for Cuk Studio; until that exists, keep terminal capabilities clearly scoped to LynOS workspace commands and never label source checks as execution.
-4. Improve relationship navigation in Mnemos, including opening a connected note directly and unlinking a relation without deleting either note.
-5. Add a persistent private release-signing workflow for safe updates.
-6. Compare screenshots against the reference and measure animation performance on the target phone.
+4. Add a persistent private release-signing workflow for safe updates.
+5. Compare screenshots against the reference image and measure animation performance on the target phone.
