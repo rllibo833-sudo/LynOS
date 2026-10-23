@@ -173,7 +173,28 @@ private fun LynOSApp(context: Context) {
        value = selectedId?.let { id -> withContext(Dispatchers.IO) { db.relatedNotes(id) } } ?: emptyList()
       }
       if(selectedRelated.isNotEmpty()) {
-       Text("CONNECTED: "+selectedRelated.joinToString(" · "){it.title},color=Cyan,fontSize=9.sp,maxLines=2)
+       Text("CONNECTED NOTES · tap to open",color=Muted,fontSize=8.sp,letterSpacing=.7.sp)
+       Column(verticalArrangement=Arrangement.spacedBy(4.dp)) {
+        selectedRelated.forEach { relatedNote ->
+         Row(Modifier.fillMaxWidth().border(1.dp,Cyan.copy(alpha=.18f),RoundedCornerShape(9.dp)).background(Panel,RoundedCornerShape(9.dp)).padding(start=9.dp,end=4.dp,top=3.dp,bottom=3.dp),verticalAlignment=Alignment.CenterVertically) {
+          Text(relatedNote.title,color=Cyan,fontSize=10.sp,maxLines=1,modifier=Modifier.weight(1f).clickable {
+           title=relatedNote.title
+           body=relatedNote.body
+           editId=relatedNote.id
+           selectedId=relatedNote.id
+           linkTargetId=null
+           message="Catatan terhubung dibuka."
+          }.padding(vertical=7.dp))
+          TextButton(onClick={scope.launch {
+           try {
+            withContext(Dispatchers.IO) { db.unlinkNotes(selectedId ?: return@launch,relatedNote.id) }
+            dataRevision++
+            message="Relasi dilepas; kedua catatan tetap tersimpan."
+           } catch(e:Exception) { message=e.message ?: "Relasi gagal dilepas." }
+          }},contentPadding=PaddingValues(horizontal=7.dp,vertical=2.dp)) { Text("Unlink",fontSize=9.sp) }
+         }
+        }
+       }
       }
       LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
        items(notes,key={it.id}) { n ->
