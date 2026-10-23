@@ -16,7 +16,7 @@ data class KnowledgeNote(
  * Offline-first storage for Mnemos. Notes are durable on-device; a future sync
  * layer can use stable IDs and updatedAt without making the app depend on a server.
  */
-class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", null, 1) {
+class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", null, 2) {
     override fun onConfigure(db: SQLiteDatabase) {
         super.onConfigure(db)
         db.setForeignKeyConstraintsEnabled(true)
@@ -44,7 +44,31 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Versioned migrations will be added as the schema evolves.
+        if (oldVersion < 2) {
+            // Normalize historical undirected edges. The temporary table keeps
+            // foreign keys and the composite key while collapsing reversed rows.
+            db.execSQL(
+                """CREATE TABLE links_v2 (
+                    source_id INTEGER NOT NULL,
+                    target_id INTEGER NOT NULL,
+                    relation TEXT NOT NULL DEFAULT 'related',
+                    PRIMARY KEY(source_id, target_id, relation),
+                    FOREIGN KEY(source_id) REFERENCES notes(id) ON DELETE CASCADE,
+                    FOREIGN KEY(target_id) REFERENCES notes(id) ON DELETE CASCADE
+                )""".trimIndent()
+            )
+            db.execSQL(
+                """INSERT OR IGNORE INTO links_v2 (source_id, target_id, relation)
+                   SELECT MIN(source_id, target_id), MAX(source_id, target_id),
+                          COALESCE(NULLIF(TRIM(relation), ''), 'related')
+                   FROM links
+                   WHERE source_id != target_id
+                   GROUP BY MIN(source_id, target_id), MAX(source_id, target_id),
+                            COALESCE(NULLIF(TRIM(relation), ''), 'related')""".trimIndent()
+            )
+            db.execSQL("DROP TABLE links")
+            db.execSQL("ALTER TABLE links_v2 RENAME TO links")
+        }
     }
 
     fun saveNote(title: String, body: String, id: Long? = null): Long {
