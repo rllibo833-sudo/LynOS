@@ -1,43 +1,44 @@
 # LynOS
 
-LynOS is a **native Android shell/app** prototype built on top of Android. It is not a bootloader, custom kernel, or replacement operating system.
+LynOS is a **native Android shell/workspace prototype** built on Android. It is not a bootloader, custom kernel, or replacement operating system.
 
-## Design reference
+## Visual direction
 
-The visual source of truth is [Mnemos_ Jaringan Pengetahuan Futuristik.png](./Mnemos_%20Jaringan%20Pengetahuan%20Futuristik.png) in this repository.
+The source of truth is [Mnemos_ Jaringan Pengetahuan Futuristik.png](./Mnemos_%20Jaringan%20Pengetahuan%20Futuristik.png).
 
-- Midnight Slate: `#182333`
-- Deep Navy: `#24364D`
-- Neural Cyan: `#38CFFF`
-- Night Blue: `#527DB8`
-- Solid-enough surfaces for legible text, a bounded connected-node graph, and restrained moving light pulses.
+- Midnight Slate `#182333`, Deep Navy `#24364D`, Neural Cyan `#38CFFF`, Night Blue `#527DB8`.
+- Connected neural landscape drawn on Compose Canvas, layered dark surfaces, restrained motion and readable controls.
+- The current implementation is an early approximation; pixel-level matching and testing on the target Vivo device are still outstanding.
 
-## Device-first implementation
+## Native implementation
 
-- Kotlin + Jetpack Compose; no Flutter, Dart, Termux, or cloud requirement for the shell.
-- Minimum Android API 26; compile/target SDK 35; Java 17.
-- The graph uses a fixed set of 8 nodes and 11 edges, drawn with Compose Canvas. It intentionally avoids blur-heavy shaders and unbounded particle systems for lower-end devices.
-- Reduced-motion and lifecycle-aware animation handling remain hardening work; current animation is a prototype and device performance has not yet been measured.
+- Kotlin + Jetpack Compose; no Flutter, Dart, Termux or cloud requirement for the local shell.
+- Minimum Android API 26; SDK 35; Java 17.
+- Home includes navigation to Mnemos, Cuk Studio, Settings and device Status.
+- Mnemos uses SQLite on-device for notes, search and note-to-note links. The UI and schema are initial implementations and still need broader device testing, delete/edit edge cases, and migration tests.
+- Cuk Studio currently has an editor and a source-wrapper check only. **It does not yet execute the full .cuk language runtime.** Integration with the native PusingCuk runtime remains required.
+- Cloud sync is not implemented. The app remains local-first.
+- Status shows Android-reported battery level and local time. LynOS does not read notifications from other apps; that requires explicit Notification Listener access, which is not implemented.
 
-## Build and download
+## Download an APK
 
-Every push to `main`, pull request targeting `main`, or manual workflow dispatch runs [Android CI](./.github/workflows/android-ci.yml). The workflow installs JDK 17, Android SDK 35 and Gradle 8.9, then runs:
+Open [GitHub Actions](https://github.com/rllibo833-sudo/LynOS/actions), choose the latest successful **Build installable Android APKs** run, then download one of its artifacts. GitHub downloads artifacts as ZIP files; extract the ZIP first to get the APK.
 
-```sh
-gradle --no-daemon :app:assembleDebug
-```
+- **LynOS-debug-apk** contains `app-debug.apk`, intended for testing.
+- **LynOS-release-apk** contains `app-release.apk`, signed by a temporary CI key so Android can install it for evaluation.
 
-When the workflow succeeds, download **LynOS-debug-apk** from that run's **Artifacts** section. This repository does not yet include a Gradle wrapper, so the CI workflow installs Gradle directly. A successful CI run is required before describing the APK as build-verified.
+The CI release signing key is intentionally disposable. A new CI run uses a different key, so its release APK cannot update an installation signed by an earlier run without uninstalling the older app first. For durable updates and distribution, configure a private persistent release keystore; never commit the keystore or passwords to Git.
 
-For local development, open the project in Android Studio with Android SDK 35 installed and sync the Gradle project.
+A successful CI build proves compilation and APK-signature verification, not that every feature has been tested on a physical phone.
 
-## Integration roadmap
+## Build locally
 
-1. **Native shell:** establish repeatable APK build and verify the UI on a real Android device.
-2. **Mnemos:** audit the existing local-first SQLite schema and define one clear ownership boundary before integrating it. Do not allow Kotlin and Python implementations to write the same database concurrently.
-3. **PusingCuk:** integrate the native runtime behind a tested interface; do not blindly copy compiler internals or introduce a Python/Termux dependency into the Android shell.
-4. **Hardening:** lifecycle-aware/reduced-motion animation, accessibility checks, crash-free launch, and memory/frame-time measurements on the target phone.
+Open the project in Android Studio with Android SDK 35 installed and sync the Gradle project. CI currently installs Gradle 8.9 directly; a Gradle wrapper has not yet been added.
 
-## Current status
+## Remaining acceptance work
 
-The repository contains the initial Compose shell and an automated APK build workflow. **The build is not yet confirmed green**, and the APK is not claimed to be device-tested. The immediate acceptance gate is a successful CI build followed by installation and launch testing on the target phone.
+1. Verify latest CI build, artifact signatures and install/launch on a real Android device.
+2. Test Mnemos save/search/link across app restarts and improve relationship navigation/deletion.
+3. Integrate the actual native PusingCuk runtime rather than treating source validation as execution.
+4. Add a persistent private release-signing workflow for safe updates.
+5. Compare screenshots against the reference and measure animation performance on the target phone.
