@@ -72,12 +72,16 @@ private fun LynOSApp(context: Context) {
  var linkTargetId by remember { mutableStateOf<Long?>(null) }
  var linkMenuOpen by remember { mutableStateOf(false) }
  var notes by remember { mutableStateOf(emptyList<KnowledgeNote>()) }
+ var linkCount by remember { mutableIntStateOf(0) }
  var message by remember { mutableStateOf("") }
  var code by remember { mutableStateOf("jancuk\nucap \"Halo dari Cuk Studio\"\nselesai jancuk") }
  var output by remember { mutableStateOf("Editor prototipe. Runtime .cuk penuh belum terhubung.") }
  var reduceMotion by remember { mutableStateOf(true) }
  val scope= rememberCoroutineScope()
- LaunchedEffect(search,page) { notes=withContext(Dispatchers.IO) { db.searchNotes(search) } }
+ LaunchedEffect(search,page) {
+  notes=withContext(Dispatchers.IO) { db.searchNotes(search) }
+  linkCount=withContext(Dispatchers.IO) { db.countLinks() }
+ }
  Box(Modifier.fillMaxSize().background(Slate)) {
   NeuralBackdrop(Modifier.fillMaxSize(),reduceMotion)
   Column(Modifier.fillMaxSize().padding(horizontal=17.dp,vertical=12.dp)) {
@@ -103,6 +107,11 @@ private fun LynOSApp(context: Context) {
      Text("A quiet workspace for ideas, code, and connections.",color=Muted,fontSize=11.sp)
      NeuralLandscape(Modifier.fillMaxWidth().weight(1f).heightIn(min=150.dp))
      Text("MNEMOS FIELD  ·  "+notes.size+" notes stored on device",color=Ink,fontSize=10.sp)
+     Row(horizontalArrangement=Arrangement.spacedBy(7.dp)) {
+      MetricCard("MEMORIES", notes.size.toString(), "Saved locally", Modifier.weight(1f))
+      MetricCard("RELATIONS", linkCount.toString(), "Knowledge links", Modifier.weight(1f))
+      MetricCard("STORAGE", "LOCAL", "SQLite offline", Modifier.weight(1f))
+     }
      Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
       Tile("⌘","MNEMOS","Notes + graph",Modifier.weight(1f)) { page=Page.MNEMOS; search="" }
       Tile("{ }","CUK STUDIO","Code editor",Modifier.weight(1f)) { page=Page.CUK }
@@ -212,6 +221,15 @@ private fun LynOSApp(context: Context) {
  }
 }
 
+@Composable private fun MetricCard(label:String,value:String,description:String,modifier:Modifier) {
+ Column(modifier.border(1.dp,Blue.copy(alpha=.32f),RoundedCornerShape(12.dp))
+  .background(Panel,RoundedCornerShape(12.dp)).padding(9.dp),
+  verticalArrangement=Arrangement.spacedBy(4.dp)) {
+  Text(label,color=Muted,fontSize=8.sp,fontWeight=FontWeight.Bold,letterSpacing=.8.sp,maxLines=1)
+  Text(value,color=Cyan,fontSize=16.sp,fontWeight=FontWeight.Bold,maxLines=1)
+  Text(description,color=Muted,fontSize=8.sp,maxLines=1)
+ }
+}
 @Composable private fun Tile(glyph:String,label:String,desc:String,modifier:Modifier,click:()->Unit) {
  Column(modifier.border(1.dp,Blue.copy(alpha=.35f),RoundedCornerShape(15.dp)).background(Brush.verticalGradient(listOf(Color(0xEE263A50),Color(0xEE1B2A3D))),RoundedCornerShape(15.dp)).clickable(onClick=click).padding(9.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
   Text(glyph,color=Cyan,fontSize=18.sp);Text(label,color=Ink,fontSize=9.sp,fontWeight=FontWeight.Bold,maxLines=1);Text(desc,color=Muted,fontSize=8.sp,maxLines=1)
