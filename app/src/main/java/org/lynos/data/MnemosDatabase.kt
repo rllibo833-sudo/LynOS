@@ -17,6 +17,11 @@ data class KnowledgeNote(
  * layer can use stable IDs and updatedAt without making the app depend on a server.
  */
 class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", null, 1) {
+    override fun onConfigure(db: SQLiteDatabase) {
+        super.onConfigure(db)
+        db.setForeignKeyConstraintsEnabled(true)
+    }
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             """CREATE TABLE notes (
@@ -75,6 +80,18 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
                 )
             }
         }
+    }
+
+    fun deleteNote(noteId: Long): Boolean {
+        return writableDatabase.delete("notes", "id = ?", arrayOf(noteId.toString())) > 0
+    }
+
+    fun unlinkNotes(sourceId: Long, targetId: Long, relation: String = "related"): Int {
+        return writableDatabase.delete(
+            "links",
+            "((source_id = ? AND target_id = ?) OR (source_id = ? AND target_id = ?)) AND relation = ?",
+            arrayOf(sourceId.toString(), targetId.toString(), targetId.toString(), sourceId.toString(), relation)
+        )
     }
 
     fun linkNotes(sourceId: Long, targetId: Long, relation: String = "related") {
