@@ -91,11 +91,14 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
 
     fun searchNotes(query: String = ""): List<KnowledgeNote> {
         val q = query.trim()
+        // Treat user input literally: '%' and '_' are search characters, not
+        // implicit SQL wildcards. Backslash is escaped before LIKE matching.
+        val escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         val cursor = readableDatabase.query(
             "notes",
             arrayOf("id", "title", "body", "updated_at"),
-            if (q.isEmpty()) null else "title LIKE ? OR body LIKE ?",
-            if (q.isEmpty()) null else arrayOf("%$q%", "%$q%"),
+            if (q.isEmpty()) null else "(title LIKE ? ESCAPE '\\\\' OR body LIKE ? ESCAPE '\\\\')",
+            if (q.isEmpty()) null else arrayOf("%$escaped%", "%$escaped%"),
             null, null, "updated_at DESC"
         )
         return cursor.use {
