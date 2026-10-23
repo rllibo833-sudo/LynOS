@@ -109,8 +109,19 @@ private fun LynOSApp(context: Context) {
   else scope.launch {
    try {
     val snapshot = withContext(Dispatchers.IO) {
-     context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
-      ?: error("Tidak dapat membaca berkas sumber.")
+     context.contentResolver.openInputStream(uri)?.use { input ->
+      val output = java.io.ByteArrayOutputStream()
+      val buffer = ByteArray(8192)
+      var total = 0
+      while (true) {
+       val count = input.read(buffer)
+       if (count < 0) break
+       total += count
+       require(total <= 10 * 1024 * 1024) { "Berkas terlalu besar (maksimum 10 MiB)." }
+       output.write(buffer, 0, count)
+      }
+      output.toString(Charsets.UTF_8.name())
+     } ?: error("Tidak dapat membaca berkas sumber.")
     }
     val imported = withContext(Dispatchers.IO) { db.importJson(snapshot) }
     dataRevision++
