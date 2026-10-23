@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Android APKs
+    name: Build installable Android APKs
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -52,8 +52,22 @@ jobs:
       - name: Assemble debug APK
         run: gradle --no-daemon --stacktrace :app:assembleDebug
 
-      - name: Assemble release APK (unsigned)
+      - name: Create disposable CI signing key
+        run: |
+          mkdir -p build
+          keytool -genkeypair -v -keystore build/ci-release.jks -storepass ci-temporary-password -keypass ci-temporary-password -alias lynos-ci -keyalg RSA -keysize 2048 -validity 2 -dname "CN=LynOS CI,O=LynOS,C=ID"
+          echo "LYNOS_KEYSTORE=$GITHUB_WORKSPACE/build/ci-release.jks" >> "$GITHUB_ENV"
+          echo "LYNOS_STORE_PASSWORD=ci-temporary-password" >> "$GITHUB_ENV"
+          echo "LYNOS_KEY_PASSWORD=ci-temporary-password" >> "$GITHUB_ENV"
+          echo "LYNOS_KEY_ALIAS=lynos-ci" >> "$GITHUB_ENV"
+
+      - name: Assemble installable release APK
         run: gradle --no-daemon --stacktrace :app:assembleRelease
+
+      - name: Verify APK signatures
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -63,10 +77,10 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload unsigned release APK
+      - name: Upload signed CI release APK
         uses: actions/upload-artifact@v4
         with:
-          name: LynOS-release-unsigned-apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: LynOS-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
