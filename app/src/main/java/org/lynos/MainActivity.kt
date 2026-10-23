@@ -198,6 +198,13 @@ private fun LynOSApp(context: Context) {
         }
        }
       }
+      if(notes.isEmpty()) {
+       Column(Modifier.fillMaxWidth().padding(vertical=18.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(5.dp)) {
+        Text(if(search.isBlank()) "MNEMOS IS QUIET" else "NO MATCHING NODES",color=Cyan,fontSize=10.sp,fontWeight=FontWeight.Bold,letterSpacing=1.sp)
+        Text(if(search.isBlank()) "Buat catatan pertama untuk mulai membangun jaringan pengetahuan." else "Coba kata lain atau hapus pencarian.",color=Muted,fontSize=10.sp)
+        if(search.isNotBlank()) TextButton(onClick={search=""}) { Text("Clear search",color=Cyan,fontSize=10.sp) }
+       }
+      }
       LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
        items(notes,key={it.id}) { n ->
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(3.dp)) {
