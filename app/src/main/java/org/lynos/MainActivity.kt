@@ -104,6 +104,24 @@ private fun LynOSApp(context: Context) {
    catch(e: Exception) { message = "Ekspor gagal: ${e.message ?: "kesalahan tulis"}" }
   }
  }
+ val jsonImportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+  if (uri == null) message = "Impor JSON dibatalkan."
+  else scope.launch {
+   try {
+    val snapshot = withContext(Dispatchers.IO) {
+     context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+      ?: error("Tidak dapat membaca berkas sumber.")
+    }
+    val imported = withContext(Dispatchers.IO) { db.importJson(snapshot) }
+    dataRevision++
+    notes = withContext(Dispatchers.IO) { db.searchNotes(search) }
+    allNotes = withContext(Dispatchers.IO) { db.searchNotes() }
+    memoryCount = withContext(Dispatchers.IO) { db.countNotes() }
+    linkCount = withContext(Dispatchers.IO) { db.countLinks() }
+    message = "Restore selesai: ${imported.notesImported} catatan, ${imported.linksImported} relasi ditambahkan."
+   } catch(e: Exception) { message = "Impor gagal; database tidak diubah: ${e.message ?: "berkas tidak valid"}" }
+  }
+ }
  val markdownExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/markdown")) { uri ->
   if(uri == null) { message = "Ekspor Markdown dibatalkan." }
   else scope.launch {
@@ -231,6 +249,7 @@ private fun LynOSApp(context: Context) {
         else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;dataRevision++;notes=withContext(Dispatchers.IO){db.searchNotes(search)};allNotes=withContext(Dispatchers.IO){db.searchNotes()};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
        }},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
        OutlinedButton(onClick={scope.launch { try { pendingExport=withContext(Dispatchers.IO){db.exportJson()}; jsonExportLauncher.launch("mnemos-export.json") } catch(e:Exception){message="Ekspor JSON gagal: ${e.message ?: "kesalahan"}"} }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("JSON ↓",fontSize=11.sp)}
+       OutlinedButton(onClick={jsonImportLauncher.launch(arrayOf("application/json","text/*"))},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("JSON ↑",fontSize=11.sp)}
        OutlinedButton(onClick={scope.launch { try { pendingExport=withContext(Dispatchers.IO){db.exportMarkdown()}; markdownExportLauncher.launch("mnemos-export.md") } catch(e:Exception){message="Ekspor Markdown gagal: ${e.message ?: "kesalahan"}"} }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("MD ↓",fontSize=11.sp)}
        Box {
         OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text(allNotes.firstOrNull{it.id==linkTargetId}?.title?.take(9) ?: "Target ▾",fontSize=11.sp,maxLines=1)}
