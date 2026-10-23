@@ -125,12 +125,13 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
 
     fun relatedNotes(noteId: Long): List<KnowledgeNote> {
         val cursor = readableDatabase.rawQuery(
-            """SELECT n.id, n.title, n.body, n.updated_at
+            """SELECT DISTINCT n.id, n.title, n.body, n.updated_at
                FROM notes n JOIN links l ON
                (n.id = l.target_id AND l.source_id = ?) OR
                (n.id = l.source_id AND l.target_id = ?)
+               WHERE n.id != ?
                ORDER BY n.updated_at DESC""".trimIndent(),
-            arrayOf(noteId.toString(), noteId.toString())
+            arrayOf(noteId.toString(), noteId.toString(), noteId.toString())
         )
         return cursor.use {
             buildList {
