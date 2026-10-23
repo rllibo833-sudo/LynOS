@@ -107,7 +107,7 @@ private fun LynOSApp(context: Context) {
      Text("PERSONAL KNOWLEDGE SYSTEM",color=Cyan,fontSize=9.sp,fontWeight=FontWeight.Bold,letterSpacing=1.4.sp)
      Text("Thoughts form\na living network.",color=Ink,fontSize=30.sp,lineHeight=34.sp,fontWeight=FontWeight.SemiBold)
      Text("A quiet workspace for ideas, code, and connections.",color=Muted,fontSize=11.sp)
-     NeuralLandscape(Modifier.fillMaxWidth().weight(1f).heightIn(min=150.dp))
+     NeuralLandscape(Modifier.fillMaxWidth().weight(1f).heightIn(min=150.dp), reduceMotion)
      Text("MNEMOS FIELD  ·  "+memoryCount+" notes stored on device",color=Ink,fontSize=10.sp)
      Row(horizontalArrangement=Arrangement.spacedBy(7.dp)) {
       MetricCard("MEMORIES", memoryCount.toString(), "Saved locally", Modifier.weight(1f))
@@ -261,34 +261,43 @@ private fun LynOSApp(context: Context) {
   pts.forEachIndexed{i,p->val pulse=if(reduced)1f else .8f+.2f*sin(phase*6.283f+i);drawCircle(Cyan.copy(alpha=.04f),8.dp.toPx()*pulse,p);drawCircle(if(i%7==0)Color(0xFFD4F7FF)else Cyan.copy(alpha=.8f),(1.2f+(i%3)*.4f).dp.toPx()*pulse,p)}
  }
 }
-@Composable private fun NeuralLandscape(modifier:Modifier){
+@Composable private fun NeuralLandscape(modifier:Modifier,reduced:Boolean){
  val transition=androidx.compose.animation.core.rememberInfiniteTransition(label="landscape")
- val phase by transition.animateFloat(0f,1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(18000)),label="landscapePhase")
+ val phase by transition.animateFloat(0f,1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)30000 else 15000)),label="landscapePhase")
  Canvas(modifier){
   val w=size.width; val h=size.height
-  drawRoundRect(Brush.verticalGradient(listOf(Color(0xDD263A50),Color(0xC8172638),Color(0xE8111C2A))),cornerRadius=androidx.compose.ui.geometry.CornerRadius(22.dp.toPx()))
-  drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha=.16f),Blue.copy(alpha=.06f),Color.Transparent),Offset(w*.51f,h*.50f),w*.48f),w*.48f,Offset(w*.51f,h*.50f))
+  val corner=androidx.compose.ui.geometry.CornerRadius(22.dp.toPx())
+  drawRoundRect(Brush.verticalGradient(listOf(Color(0xEE263A50),Color(0xD8172638),Color(0xF0111C2A))),cornerRadius=corner)
+  drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha=.12f),Blue.copy(alpha=.045f),Color.Transparent),Offset(w*.49f,h*.44f),w*.52f),w*.52f,Offset(w*.49f,h*.44f))
+  drawCircle(Brush.radialGradient(listOf(Blue.copy(alpha=.11f),Color.Transparent),Offset(w*.88f,h*.72f),w*.34f),w*.34f,Offset(w*.88f,h*.72f))
+  for(i in 0..7) drawLine(Blue.copy(alpha=.075f),Offset(w*.5f,h*.58f),Offset(w*(i/7f),h*.98f),.55.dp.toPx())
+  for(i in 0..5){val t=i/5f;val y=h*(.66f+t*t*.30f);drawLine(Blue.copy(alpha=.065f+t*.025f),Offset(w*.02f,y),Offset(w*.98f,y),.55.dp.toPx())}
   val pts=nodePoints.map{Offset(w*(.04f+it.first*.92f),h*(.08f+it.second*.84f))}
   nodeEdges.forEachIndexed{i,e->
-   val a=pts[e.first]; val b=pts[e.second]
-   val dx=b.x-a.x; val dy=b.y-a.y
+   val a=pts[e.first];val b=pts[e.second];val dx=b.x-a.x;val dy=b.y-a.y
    val bend=Offset((a.x+b.x)/2f-dy*.10f,(a.y+b.y)/2f+dx*.10f)
    val path=androidx.compose.ui.graphics.Path().apply{moveTo(a.x,a.y);quadraticTo(bend.x,bend.y,b.x,b.y)}
-   drawPath(path,if(i%5==0)Cyan.copy(alpha=.48f)else Blue.copy(alpha=.28f),style=androidx.compose.ui.graphics.drawscope.Stroke(width=if(i%5==0)1.1.dp.toPx() else .65.dp.toPx(),cap=StrokeCap.Round))
+   val important=i%5==0;val wave=if(reduced).45f else (.5f+.5f*sin(phase*6.283f+i*.31f))
+   drawPath(path,if(important)Cyan.copy(alpha=.22f+wave*.23f)else Blue.copy(alpha=.14f+wave*.12f),style=androidx.compose.ui.graphics.drawscope.Stroke(width=if(important)1.05.dp.toPx() else .6.dp.toPx(),cap=StrokeCap.Round))
   }
   val hubs=listOf(Offset(w*.24f,h*.34f),Offset(w*.51f,h*.50f),Offset(w*.76f,h*.65f))
   hubs.forEachIndexed{i,p->
-   val pulse=.88f+.12f*sin(phase*6.283f+i)
-   drawCircle(Cyan.copy(alpha=.07f),18.dp.toPx()*pulse,p)
-   drawCircle(Cyan.copy(alpha=.12f),9.dp.toPx()*pulse,p)
-   drawCircle(Color(0xFFD9F8FF),2.6.dp.toPx(),p)
+   val pulse=if(reduced)1f else .88f+.12f*sin(phase*6.283f+i)
+   drawCircle(Brush.radialGradient(listOf(Cyan.copy(alpha=.16f),Cyan.copy(alpha=.035f),Color.Transparent),p,23.dp.toPx()*pulse),23.dp.toPx()*pulse,p)
+   drawCircle(Cyan.copy(alpha=.10f),9.dp.toPx()*pulse,p)
   }
   pts.forEachIndexed{i,p->
-   val active=i%6==0
-   drawCircle(Cyan.copy(alpha=if(active).13f else .055f),if(active)8.dp.toPx() else 4.dp.toPx(),p)
-   drawCircle(if(active)Color(0xFFD9F8FF)else Cyan.copy(alpha=.86f),if(active)1.8.dp.toPx() else 1.dp.toPx(),p)
+   val near=i%6==0;val pulse=if(reduced)1f else .88f+.12f*sin(phase*6.283f+i*.7f)
+   if(near)drawCircle(Cyan.copy(alpha=.13f),8.dp.toPx()*pulse,p)
+   drawCircle(if(near)Color(0xFFD9F8FF)else Cyan.copy(alpha=.62f),if(near)1.8.dp.toPx() else .8.dp.toPx(),p)
   }
-  drawRoundRect(Color.White.copy(alpha=.035f),topLeft=Offset(1.dp.toPx(),1.dp.toPx()),size=androidx.compose.ui.geometry.Size(w-2.dp.toPx(),h-2.dp.toPx()),cornerRadius=androidx.compose.ui.geometry.CornerRadius(22.dp.toPx()),style=androidx.compose.ui.graphics.drawscope.Stroke(width=1.dp.toPx()))
+  repeat(9){i->
+   val drift=if(reduced)0f else ((phase+i*.173f)%1f-.5f)*w*.035f
+   val x=w*(.08f+i*.105f)+drift;val y=h*(.16f+((i*37)%67)/100f)
+   val alpha=if(reduced).20f else .12f+.12f*sin(phase*6.283f+i)
+   drawCircle(Cyan.copy(alpha=alpha),(1.1f+(i%3)*.35f).dp.toPx(),Offset(x,y))
+  }
+  drawRoundRect(Color.White.copy(alpha=.04f),topLeft=Offset(1.dp.toPx(),1.dp.toPx()),size=androidx.compose.ui.geometry.Size(w-2.dp.toPx(),h-2.dp.toPx()),cornerRadius=corner,style=androidx.compose.ui.graphics.drawscope.Stroke(width=1.dp.toPx()))
  }
 }
 private val nodePoints=listOf(.02f to .40f,.06f to .15f,.09f to .73f,.14f to .31f,.16f to .55f,.20f to .86f,.23f to .11f,.26f to .39f,.29f to .65f,.32f to .22f,.35f to .49f,.38f to .82f,.41f to .12f,.44f to .34f,.47f to .62f,.50f to .87f,.53f to .21f,.56f to .46f,.59f to .72f,.62f to .10f,.65f to .36f,.68f to .57f,.71f to .84f,.74f to .22f,.77f to .43f,.80f to .66f,.83f to .12f,.86f to .34f,.89f to .56f,.92f to .81f,.96f to .25f,.99f to .49f)
