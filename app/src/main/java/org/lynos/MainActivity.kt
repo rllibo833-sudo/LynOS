@@ -221,7 +221,7 @@ private fun LynOSApp(context: Context) {
      }
      Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
       Field(commandInput,{commandInput=it},"help / notes / find teks",true,Modifier.weight(1f))
-      Button(onClick={
+      Button(onClick={scope.launch {
        val raw=commandInput.trim()
        val parts=raw.split(" ",limit=2)
        val result=try {
@@ -245,7 +245,7 @@ private fun LynOSApp(context: Context) {
        if(raw.lowercase(Locale.ROOT)!="clear") terminalHistory=(terminalHistory + "> $raw" + result).takeLast(60)
        output=result
        commandInput=""
-      },modifier=Modifier.height(42.dp)){Text("Run")}
+      }},modifier=Modifier.height(42.dp)){Text("Run")}
      }
     }
     Page.SETTINGS -> Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(13.dp)) {
