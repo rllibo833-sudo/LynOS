@@ -69,6 +69,8 @@ private fun LynOSApp(context: Context) {
  var body by remember { mutableStateOf("") }
  var editId by remember { mutableStateOf<Long?>(null) }
  var selectedId by remember { mutableStateOf<Long?>(null) }
+ var linkTargetId by remember { mutableStateOf<Long?>(null) }
+ var linkMenuOpen by remember { mutableStateOf(false) }
  var notes by remember { mutableStateOf(emptyList<KnowledgeNote>()) }
  var message by remember { mutableStateOf("") }
  var code by remember { mutableStateOf("jancuk\nucap \"Halo dari Cuk Studio\"\nselesai jancuk") }
@@ -116,15 +118,24 @@ private fun LynOSApp(context: Context) {
       Text("MNEMOS / KNOWLEDGE GRAPH",color=Cyan,fontSize=10.sp,fontWeight=FontWeight.Bold)
       Field(search,{search=it},"Search notes…",true)
       Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-       Button(onClick={title="";body="";editId=null;selectedId=null;message=""},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text("New",fontSize=11.sp)}
+       Button(onClick={title="";body="";editId=null;selectedId=null;linkTargetId=null;message=""},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text("New",fontSize=11.sp)}
        Button(onClick={scope.launch {
         if(title.isBlank()) message="Judul catatan wajib diisi."
         else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;notes=withContext(Dispatchers.IO){db.searchNotes(search)};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
        }},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
+       Box {
+        OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("Target ▾",fontSize=11.sp)}
+        DropdownMenu(expanded=linkMenuOpen,onDismissRequest={linkMenuOpen=false}) {
+         notes.filter { it.id != selectedId }.forEach { candidate ->
+          DropdownMenuItem(text={Text(candidate.title,maxLines=1)},onClick={linkTargetId=candidate.id;linkMenuOpen=false;message="Target relasi: ${candidate.title}"})
+         }
+        }
+       }
        OutlinedButton(onClick={scope.launch {
-        val from=selectedId; val to=notes.firstOrNull{it.id!=from}?.id
-        if(from==null||to==null) message="Pilih catatan dan buat catatan kedua dahulu."
-        else try{withContext(Dispatchers.IO){db.linkNotes(from,to)};message="Relasi antar-node tersimpan."}catch(e:Exception){message=e.message ?: "Relasi gagal."}
+        val from=selectedId; val to=linkTargetId
+        if(from==null) message="Pilih catatan sumber dahulu."
+        else if(to==null || to==from) message="Pilih target relasi yang berbeda dari catatan sumber."
+        else try{withContext(Dispatchers.IO){db.linkNotes(from,to)};message="Relasi tersimpan: #${from} → #${to}";notes=withContext(Dispatchers.IO){db.searchNotes(search)}}catch(e:Exception){message=e.message ?: "Relasi gagal."}
        }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("Link",fontSize=11.sp)}
       }
       Field(title,{title=it},"Judul catatan",true)
@@ -134,7 +145,7 @@ private fun LynOSApp(context: Context) {
       LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
        items(notes,key={it.id}) { n ->
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(3.dp)) {
-         Column(Modifier.fillMaxWidth().border(1.dp,if(editId==n.id)Cyan.copy(alpha=.65f) else Blue.copy(alpha=.25f),RoundedCornerShape(11.dp)).background(Panel,RoundedCornerShape(11.dp)).clickable{title=n.title;body=n.body;editId=n.id;selectedId=n.id;message=""}.padding(10.dp)) {
+         Column(Modifier.fillMaxWidth().border(1.dp,if(editId==n.id)Cyan.copy(alpha=.65f) else Blue.copy(alpha=.25f),RoundedCornerShape(11.dp)).background(Panel,RoundedCornerShape(11.dp)).clickable{title=n.title;body=n.body;editId=n.id;selectedId=n.id;if(linkTargetId==n.id) linkTargetId=null;message=""}.padding(10.dp)) {
           Text(n.title,color=Ink,fontSize=12.sp,fontWeight=FontWeight.SemiBold)
           if(n.body.isNotBlank()) Text(n.body,color=Muted,fontSize=10.sp,maxLines=2)
           Text("NODE #"+n.id+" · "+SimpleDateFormat("MMM d, HH:mm",Locale.getDefault()).format(Date(n.updatedAt)),color=Cyan,fontSize=8.sp)
