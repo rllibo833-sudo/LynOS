@@ -67,7 +67,9 @@ private fun LynHome() {
         label = "field-phase"
     )
     BoxWithConstraints(Modifier.fillMaxSize().background(MidnightSlate)) {
-        val landscape = maxWidth > maxHeight
+        val availableWidth = maxWidth
+        val availableHeight = maxHeight
+        val landscape = availableWidth > availableHeight
         Box(Modifier.fillMaxSize()) {
             NeuralBackdrop(phase, Modifier.fillMaxSize())
             if (landscape) {
@@ -77,7 +79,7 @@ private fun LynHome() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(
-                        Modifier.width(maxWidth * 0.36f).fillMaxSize(),
+                        Modifier.width(availableWidth * 0.36f).fillMaxSize(),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         BrandMark()
