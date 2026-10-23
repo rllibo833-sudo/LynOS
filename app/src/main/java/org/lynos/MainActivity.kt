@@ -76,6 +76,7 @@ private fun LynOSApp(context: Context) {
  var linkTargetId by remember { mutableStateOf<Long?>(null) }
  var linkMenuOpen by remember { mutableStateOf(false) }
  var notes by remember { mutableStateOf(emptyList<KnowledgeNote>()) }
+ var allNotes by remember { mutableStateOf(emptyList<KnowledgeNote>()) }
  var linkCount by remember { mutableIntStateOf(0) }
  var memoryCount by remember { mutableIntStateOf(0) }
  var dataRevision by remember { mutableIntStateOf(0) }
@@ -96,6 +97,7 @@ private fun LynOSApp(context: Context) {
  }
  LaunchedEffect(search,page,dataRevision) {
   notes=withContext(Dispatchers.IO) { db.searchNotes(search) }
+  allNotes=withContext(Dispatchers.IO) { db.searchNotes() }
   linkCount=withContext(Dispatchers.IO) { db.countLinks() }
   memoryCount=withContext(Dispatchers.IO) { db.countNotes() }
  }
@@ -148,12 +150,12 @@ private fun LynOSApp(context: Context) {
        Button(onClick={title="";body="";editId=null;selectedId=null;linkTargetId=null;message=""},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text("New",fontSize=11.sp)}
        Button(onClick={scope.launch {
         if(title.isBlank()) message="Judul catatan wajib diisi."
-        else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;dataRevision++;notes=withContext(Dispatchers.IO){db.searchNotes(search)};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
+        else try { val id=withContext(Dispatchers.IO){db.saveNote(title,body,editId)}; editId=id;selectedId=id;dataRevision++;notes=withContext(Dispatchers.IO){db.searchNotes(search)};allNotes=withContext(Dispatchers.IO){db.searchNotes()};message="Catatan tersimpan lokal." } catch(e:Exception){message=e.message ?: "Gagal menyimpan."}
        }},contentPadding=PaddingValues(horizontal=10.dp,vertical=6.dp)){Text(if(editId==null)"Save" else "Update",fontSize=11.sp)}
        Box {
-        OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text(notes.firstOrNull{it.id==linkTargetId}?.title?.take(9) ?: "Target ▾",fontSize=11.sp,maxLines=1)}
+        OutlinedButton(onClick={linkMenuOpen=true},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text(allNotes.firstOrNull{it.id==linkTargetId}?.title?.take(9) ?: "Target ▾",fontSize=11.sp,maxLines=1)}
         DropdownMenu(expanded=linkMenuOpen,onDismissRequest={linkMenuOpen=false}) {
-         notes.filter { it.id != selectedId }.forEach { candidate ->
+         allNotes.filter { it.id != selectedId }.forEach { candidate ->
           DropdownMenuItem(text={Text(candidate.title,maxLines=1)},onClick={linkTargetId=candidate.id;linkMenuOpen=false;message="Target relasi: ${candidate.title}"})
          }
         }
@@ -162,7 +164,7 @@ private fun LynOSApp(context: Context) {
         val from=selectedId; val to=linkTargetId
         if(from==null) message="Pilih catatan sumber dahulu."
         else if(to==null || to==from) message="Pilih target relasi yang berbeda dari catatan sumber."
-        else try{withContext(Dispatchers.IO){db.linkNotes(from,to)};dataRevision++;message="Relasi tersimpan: #${from} → #${to}";notes=withContext(Dispatchers.IO){db.searchNotes(search)}}catch(e:Exception){message=e.message ?: "Relasi gagal."}
+        else try{withContext(Dispatchers.IO){db.linkNotes(from,to)};dataRevision++;message="Relasi tersimpan: #${from} → #${to}";notes=withContext(Dispatchers.IO){db.searchNotes(search)};allNotes=withContext(Dispatchers.IO){db.searchNotes()}}catch(e:Exception){message=e.message ?: "Relasi gagal."}
        }},contentPadding=PaddingValues(horizontal=8.dp,vertical=6.dp)){Text("Link",fontSize=11.sp)}
       }
       Field(title,{title=it},"Judul catatan",true)
@@ -211,6 +213,7 @@ private fun LynOSApp(context: Context) {
             dataRevision++
             if(linkTargetId==n.id) linkTargetId=null
             notes=withContext(Dispatchers.IO){db.searchNotes(search)}
+            allNotes=withContext(Dispatchers.IO){db.searchNotes()}
             if(editId==n.id){title="";body="";editId=null}
             selectedId=null
             message="Catatan dihapus. Relasi terkait ikut dibersihkan."
