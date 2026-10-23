@@ -138,6 +138,7 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
         require(sourceId > 0 && targetId > 0) { "ID node tidak valid." }
         require(sourceId != targetId) { "Node tidak dapat dihubungkan ke dirinya sendiri." }
         val normalizedRelation = relation.trim().ifBlank { "related" }
+        require(normalizedRelation.length <= 128) { "Nama relasi maksimal 128 karakter." }
         // Relations are undirected in the current graph model. Canonical ordering
         // prevents A-B and B-A from becoming duplicate edges.
         val first = minOf(sourceId, targetId)
@@ -147,7 +148,21 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
             put("target_id", second)
             put("relation", normalizedRelation)
         }
-        writableDatabase.insertWithOnConflict("links", null, values, SQLiteDatabase.CONFLICT_IGNORE)
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            // Check endpoints explicitly so callers get a clear domain error instead
+            // of a low-level SQLite foreign-key exception.
+            val existing = db.rawQuery(
+                "SELECT COUNT(*) FROM notes WHERE id IN (?, ?)",
+                arrayOf(first.toString(), second.toString())
+            ).use { cursor -> cursor.moveToFirst() && cursor.getInt(0) == 2 }
+            check(existing) { "Catatan sumber atau target sudah tidak tersedia." }
+            db.insertWithOnConflict("links", null, values, SQLiteDatabase.CONFLICT_IGNORE)
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
     }
 
     fun relatedNotes(noteId: Long): List<KnowledgeNote> {
