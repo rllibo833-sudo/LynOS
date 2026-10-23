@@ -169,6 +169,12 @@ private fun LynOSApp(context: Context) {
       Field(body,{body=it},"Isi catatan / pengetahuan…",false,Modifier.fillMaxWidth().height(76.dp))
       if(message.isNotBlank()) Text(message,color=Cyan,fontSize=10.sp)
       Text("NOTES / "+notes.size,color=Muted,fontSize=9.sp,letterSpacing=1.2.sp)
+      val selectedRelated by produceState(emptyList<KnowledgeNote>(),selectedId,dataRevision) {
+       value = selectedId?.let { id -> withContext(Dispatchers.IO) { db.relatedNotes(id) } } ?: emptyList()
+      }
+      if(selectedRelated.isNotEmpty()) {
+       Text("CONNECTED: "+selectedRelated.joinToString(" · "){it.title},color=Cyan,fontSize=9.sp,maxLines=2)
+      }
       LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(5.dp)) {
        items(notes,key={it.id}) { n ->
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(3.dp)) {
@@ -192,10 +198,6 @@ private fun LynOSApp(context: Context) {
          }
         }
        }
-      }
-      selectedId?.let { id ->
-       val related by produceState(emptyList<KnowledgeNote>(),id) { value=withContext(Dispatchers.IO){db.relatedNotes(id)} }
-       if(related.isNotEmpty()) Text("CONNECTED: "+related.joinToString(" · "){it.title},color=Cyan,fontSize=9.sp,maxLines=2)
       }
      }
     }
@@ -270,7 +272,12 @@ private fun LynOSApp(context: Context) {
      StatusRow("Cloud sync","Belum dikonfigurasi","OFF")
     }
     Page.STATUS -> {
-     val battery=remember{(context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager).getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).coerceIn(0,100)}
+     val battery by produceState(0) {
+      value = withContext(Dispatchers.IO) {
+       (context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager)
+        .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).coerceIn(0,100)
+      }
+     }
      Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(11.dp)) {
       Text("DEVICE STATUS",color=Cyan,fontWeight=FontWeight.Bold)
       StatusRow("Battery","Nilai yang dilaporkan Android",battery.toString()+"%")
