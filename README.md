@@ -16,7 +16,7 @@ The source of truth is [Mnemos_ Jaringan Pengetahuan Futuristik.png](./Mnemos_%2
 - Kotlin + Jetpack Compose; no Flutter, Dart, Termux or cloud requirement for the local shell.
 - Minimum Android API 26; SDK 35; Java 17.
 - Home includes navigation to Mnemos, Cuk Studio, Settings and device Status.
-- Mnemos uses SQLite on-device for notes, search and note-to-note links. The UI and schema are initial implementations and still need broader device testing, delete/edit edge cases, and migration tests.
+- Mnemos uses SQLite on-device for notes, search and note-to-note links. Note updates fail explicitly if the referenced row disappeared; undirected relations use canonical endpoint ordering to avoid reversed duplicate edges. Broader device testing and schema migration tests remain outstanding.
 - Cuk Studio currently has an editor and a source-wrapper check only. **It does not yet execute the full .cuk language runtime.** Integration with the native PusingCuk runtime remains required.
 - Cloud sync is not implemented. The app remains local-first.
 - Status shows Android-reported battery level and local time. LynOS does not read notifications from other apps; that requires explicit Notification Listener access, which is not implemented.
