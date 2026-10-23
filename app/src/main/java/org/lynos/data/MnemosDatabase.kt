@@ -228,7 +228,7 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
             append('"')
         }
         return buildString {
-            append("{\n  \"format\": \"mnemos-export-v1\",\n  \"notes\": [")
+            append("{\n  \"format\": \"lynos-mnemos-export-v1\",\n  \"notes\": [")
             notes.forEachIndexed { index, note ->
                 append(if (index == 0) "\n" else ",\n")
                 append("    {\"id\": ").append(note.id)
@@ -269,7 +269,7 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
             .replace("|", "\\|").replace("\r", "").replace("\n", "<br>")
         return buildString {
             append("# Mnemos export\n\n")
-            append("Format: `mnemos-export-v1`  \n")
+            append("Format: `lynos-mnemos-export-v1`  \n")
             append("Exported at: ").append(System.currentTimeMillis()).append(" (Unix milliseconds)\n\n")
             append("## Notes\n\n")
             if (notes.isEmpty()) append("_No notes._\n")
