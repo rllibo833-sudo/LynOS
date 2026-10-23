@@ -59,7 +59,8 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
             if (id == null) db.insertOrThrow("notes", null, values)
             else {
                 val changed = db.update("notes", values, "id = ?", arrayOf(id.toString()))
-                if (changed == 0) db.insertOrThrow("notes", null, values) else id
+                check(changed > 0) { "Catatan yang akan diperbarui sudah tidak tersedia." }
+                id
             }
         }
     }
@@ -97,19 +98,27 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
     }
 
     fun unlinkNotes(sourceId: Long, targetId: Long, relation: String = "related"): Int {
+        val first = minOf(sourceId, targetId)
+        val second = maxOf(sourceId, targetId)
         return writableDatabase.delete(
             "links",
-            "((source_id = ? AND target_id = ?) OR (source_id = ? AND target_id = ?)) AND relation = ?",
-            arrayOf(sourceId.toString(), targetId.toString(), targetId.toString(), sourceId.toString(), relation)
+            "source_id = ? AND target_id = ? AND relation = ?",
+            arrayOf(first.toString(), second.toString(), relation.trim().ifBlank { "related" })
         )
     }
 
     fun linkNotes(sourceId: Long, targetId: Long, relation: String = "related") {
+        require(sourceId > 0 && targetId > 0) { "ID node tidak valid." }
         require(sourceId != targetId) { "Node tidak dapat dihubungkan ke dirinya sendiri." }
+        val normalizedRelation = relation.trim().ifBlank { "related" }
+        // Relations are undirected in the current graph model. Canonical ordering
+        // prevents A-B and B-A from becoming duplicate edges.
+        val first = minOf(sourceId, targetId)
+        val second = maxOf(sourceId, targetId)
         val values = ContentValues().apply {
-            put("source_id", sourceId)
-            put("target_id", targetId)
-            put("relation", relation.ifBlank { "related" })
+            put("source_id", first)
+            put("target_id", second)
+            put("relation", normalizedRelation)
         }
         writableDatabase.insertWithOnConflict("links", null, values, SQLiteDatabase.CONFLICT_IGNORE)
     }
