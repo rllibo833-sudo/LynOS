@@ -82,6 +82,16 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
         }
     }
 
+    fun countNotes(): Int {
+        val cursor = readableDatabase.rawQuery("SELECT COUNT(*) FROM notes", null)
+        return cursor.use { if (it.moveToFirst()) it.getInt(0) else 0 }
+    }
+
+    fun countLinks(): Int {
+        val cursor = readableDatabase.rawQuery("SELECT COUNT(*) FROM links", null)
+        return cursor.use { if (it.moveToFirst()) it.getInt(0) else 0 }
+    }
+
     fun deleteNote(noteId: Long): Boolean {
         return writableDatabase.delete("notes", "id = ?", arrayOf(noteId.toString())) > 0
     }
