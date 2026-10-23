@@ -97,7 +97,7 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
         val cursor = readableDatabase.query(
             "notes",
             arrayOf("id", "title", "body", "updated_at"),
-            if (q.isEmpty()) null else "(title LIKE ? ESCAPE '\\\\' OR body LIKE ? ESCAPE '\\\\')",
+            if (q.isEmpty()) null else "(title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')",
             if (q.isEmpty()) null else arrayOf("%$escaped%", "%$escaped%"),
             null, null, "updated_at DESC"
         )
