@@ -7,8 +7,9 @@ LynOS is a **native Android shell/workspace prototype** built on Android. It is 
 The source of truth is [Mnemos_ Jaringan Pengetahuan Futuristik.png](./Mnemos_%20Jaringan%20Pengetahuan%20Futuristik.png).
 
 - Midnight Slate `#182333`, Deep Navy `#24364D`, Neural Cyan `#38CFFF`, Night Blue `#527DB8`.
-- Connected neural landscape drawn on Compose Canvas, layered dark surfaces, restrained motion and readable controls.
-- The current implementation is an early approximation; pixel-level matching and testing on the target Vivo device are still outstanding.
+- Neural scene is rendered natively with Jetpack Compose Canvas: atmospheric background, perspective guides, curved graph connections, pulsing hubs and subtle near-field particles.
+- The scene honors the Reduced motion setting with slower/steadier animation; the visual remains an early approximation until screenshot comparison and target-device profiling are completed.
+- Home dashboard memory and relation totals are read from the on-device SQLite database; no sample statistics are fabricated.
 
 ## Native implementation
 
