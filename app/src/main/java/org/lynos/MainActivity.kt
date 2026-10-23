@@ -114,11 +114,11 @@ private fun LynOSApp(context: Context) {
    }
    Spacer(Modifier.height(12.dp))
    when(page) {
-    Page.HOME -> Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+    Page.HOME -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
      Text("PERSONAL KNOWLEDGE SYSTEM",color=Cyan,fontSize=9.sp,fontWeight=FontWeight.Bold,letterSpacing=1.4.sp)
      Text("Thoughts form\na living network.",color=Ink,fontSize=30.sp,lineHeight=34.sp,fontWeight=FontWeight.SemiBold)
      Text("A quiet workspace for ideas, code, and connections.",color=Muted,fontSize=11.sp)
-     NeuralLandscape(Modifier.fillMaxWidth().weight(1f).heightIn(min=150.dp), reduceMotion)
+     NeuralLandscape(Modifier.fillMaxWidth().height(210.dp), reduceMotion)
      Text("MNEMOS FIELD  ·  "+memoryCount+" notes stored on device",color=Ink,fontSize=10.sp)
      Row(horizontalArrangement=Arrangement.spacedBy(7.dp)) {
       MetricCard("MEMORIES", memoryCount.toString(), "Saved locally", Modifier.weight(1f))
