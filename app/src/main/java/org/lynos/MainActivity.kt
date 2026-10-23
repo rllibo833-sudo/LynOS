@@ -116,7 +116,8 @@ private fun LynOSApp(context: Context) {
     Spacer(Modifier.weight(1f)); Text("LOCAL-FIRST",color=Muted,fontSize=8.sp)
    }
    Spacer(Modifier.height(12.dp))
-   when(page) {
+   Box(Modifier.weight(1f).fillMaxWidth()) {
+    when(page) {
     Page.HOME -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
      Text("PERSONAL KNOWLEDGE SYSTEM",color=Cyan,fontSize=9.sp,fontWeight=FontWeight.Bold,letterSpacing=1.4.sp)
      Text("Thoughts form\na living network.",color=Ink,fontSize=30.sp,lineHeight=34.sp,fontWeight=FontWeight.SemiBold)
@@ -270,6 +271,7 @@ private fun LynOSApp(context: Context) {
       StatusRow("Clock", "Waktu lokal perangkat",SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(Date(nowMillis)))
      }
     }
+   }
    }
    Spacer(Modifier.height(7.dp))
    Row(Modifier.fillMaxWidth().border(1.dp,Blue.copy(alpha=.3f),RoundedCornerShape(14.dp)).background(Color(0xE51A293B),RoundedCornerShape(14.dp)).padding(4.dp),horizontalArrangement=Arrangement.spacedBy(3.dp)) {
