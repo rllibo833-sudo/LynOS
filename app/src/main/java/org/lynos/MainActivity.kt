@@ -213,7 +213,7 @@ private fun LynOSApp(context: Context) {
        }
        terminalHistory = (terminalHistory + "> check-source" + output).takeLast(60)
       },modifier=Modifier.weight(1f)){Text("Check source",fontSize=11.sp)}
-      OutlinedButton(onClick={code="jancuk\\nhedeh \\"Halo dari Cuk Studio\\"\\nselesai jancuk";output="Template .cuk dimuat.",terminalHistory=terminalHistory+"> template halo"},modifier=Modifier.weight(1f)){Text("Template",fontSize=11.sp)}
+      OutlinedButton(onClick={code="jancuk\nhedeh \"Halo dari Cuk Studio\"\nselesai jancuk";output="Template .cuk dimuat.";terminalHistory=terminalHistory+"> template halo"},modifier=Modifier.weight(1f)){Text("Template",fontSize=11.sp)}
      }
      Text("TERMINAL",color=Muted,fontSize=8.sp,fontWeight=FontWeight.Bold)
      LazyColumn(Modifier.weight(0.55f).fillMaxWidth().border(1.dp,Blue.copy(alpha=.35f),RoundedCornerShape(10.dp)).background(Color(0xFF0D1722),RoundedCornerShape(10.dp)).padding(8.dp),verticalArrangement=Arrangement.spacedBy(3.dp)) {
@@ -230,9 +230,9 @@ private fun LynOSApp(context: Context) {
          "help" -> "Perintah: help, date, status, notes, links, find <teks>, note <judul> :: <isi>, clear. Perintah lokal LynOS; bukan shell OS."
          "date" -> SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.getDefault()).format(Date(System.currentTimeMillis()))
          "status" -> "LynOS local-first | notes=${withContext(Dispatchers.IO){db.countNotes()}} | links=${withContext(Dispatchers.IO){db.countLinks()}}"
-         "notes" -> withContext(Dispatchers.IO){db.searchNotes()}.take(8).let { found -> if(found.isEmpty()) "Belum ada catatan." else found.joinToString("\\n") { "#${it.id} ${it.title}" } }
+         "notes" -> withContext(Dispatchers.IO){db.searchNotes()}.take(8).let { found -> if(found.isEmpty()) "Belum ada catatan." else found.joinToString("\n") { "#${it.id} ${it.title}" } }
          "links" -> "Relasi tersimpan: ${withContext(Dispatchers.IO){db.countLinks()}}"
-         "find" -> if(parts.size<2 || parts[1].isBlank()) "Pakai: find <teks>" else withContext(Dispatchers.IO){db.searchNotes(parts[1])}.take(8).let { found -> if(found.isEmpty()) "Tidak ditemukan." else found.joinToString("\\n") { "#${it.id} ${it.title}" } }
+         "find" -> if(parts.size<2 || parts[1].isBlank()) "Pakai: find <teks>" else withContext(Dispatchers.IO){db.searchNotes(parts[1])}.take(8).let { found -> if(found.isEmpty()) "Tidak ditemukan." else found.joinToString("\n") { "#${it.id} ${it.title}" } }
          "note" -> {
           val payload=raw.substringAfter(" ", "").split("::",limit=2)
           if(payload.size<2 || payload[0].isBlank()) "Pakai: note Judul :: isi catatan"
