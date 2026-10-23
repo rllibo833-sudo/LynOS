@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.lynos.data.KnowledgeNote
 import org.lynos.data.MnemosDatabase
@@ -78,7 +79,14 @@ private fun LynOSApp(context: Context) {
  var code by remember { mutableStateOf("jancuk\nucap \"Halo dari Cuk Studio\"\nselesai jancuk") }
  var output by remember { mutableStateOf("Editor prototipe. Runtime .cuk penuh belum terhubung.") }
  var reduceMotion by remember { mutableStateOf(true) }
+ var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
  val scope= rememberCoroutineScope()
+ LaunchedEffect(Unit) {
+  while (true) {
+   nowMillis = System.currentTimeMillis()
+   delay(1000)
+  }
+ }
  LaunchedEffect(search,page) {
   notes=withContext(Dispatchers.IO) { db.searchNotes(search) }
   linkCount=withContext(Dispatchers.IO) { db.countLinks() }
@@ -93,7 +101,7 @@ private fun LynOSApp(context: Context) {
      Text("NEURAL WORKSPACE / 0.2",color=Muted,fontSize=8.sp,letterSpacing=1.3.sp)
     }
     Spacer(Modifier.weight(1f))
-    Text(SimpleDateFormat("HH:mm",Locale.getDefault()).format(Date()),color=Cyan,fontSize=15.sp,fontWeight=FontWeight.SemiBold)
+    Text(SimpleDateFormat("HH:mm",Locale.getDefault()).format(Date(nowMillis)),color=Cyan,fontSize=15.sp,fontWeight=FontWeight.SemiBold)
    }
    Spacer(Modifier.height(10.dp))
    Row(verticalAlignment=Alignment.CenterVertically) {
@@ -209,7 +217,7 @@ private fun LynOSApp(context: Context) {
       StatusRow("Battery","Nilai yang dilaporkan Android",battery.toString()+"%")
       StatusRow("Knowledge storage","SQLite lokal","ON DEVICE")
       StatusRow("Notifications","LynOS tidak membaca notifikasi aplikasi lain tanpa Notification Listener access","PERMISSION")
-      StatusRow("Clock", "Waktu lokal perangkat",SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(Date()))
+      StatusRow("Clock", "Waktu lokal perangkat",SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(Date(nowMillis)))
      }
     }
    }
