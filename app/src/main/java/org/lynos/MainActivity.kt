@@ -82,6 +82,7 @@ private fun LynOSApp(context: Context) {
  var linkCount by remember { mutableIntStateOf(0) }
  var memoryCount by remember { mutableIntStateOf(0) }
  var dataRevision by remember { mutableIntStateOf(0) }
+ val scope= rememberCoroutineScope()
  var message by remember { mutableStateOf("") }
  var pendingExport by remember { mutableStateOf("") }
  val jsonExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -105,7 +106,6 @@ private fun LynOSApp(context: Context) {
  val preferences = remember { context.getSharedPreferences("lynos_preferences", Context.MODE_PRIVATE) }
  var reduceMotion by remember { mutableStateOf(preferences.getBoolean("reduce_motion", true)) }
  var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
- val scope= rememberCoroutineScope()
  LaunchedEffect(Unit) {
   while (true) {
    nowMillis = System.currentTimeMillis()
