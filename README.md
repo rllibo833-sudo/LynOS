@@ -43,3 +43,19 @@ Open the project in Android Studio with Android SDK 35 installed and sync the Gr
 3. Decide and implement a safe local `.cuk` execution backend for Cuk Studio; until that exists, keep terminal capabilities clearly scoped to LynOS workspace commands and never label source checks as execution.
 4. Add a persistent private release-signing workflow for safe updates.
 5. Compare screenshots against the reference image and measure animation performance on the target phone.
+
+## Data/backend hardening
+
+- Mnemos remains offline-first: the device SQLite database is the source of truth; the app does not require an API or account to create/search/edit/delete notes or maintain graph links.
+- Schema v3 adds indexes for recent-note ordering, reverse-edge traversal, and relation filtering. Existing v1 databases are normalized to schema v2 first, then receive the v3 indexes; fresh installs create the current schema directly.
+- Link writes validate both endpoints inside a transaction, canonicalize undirected edges, reject self-links, and preserve foreign-key cascade deletion.
+- Database calls made by the UI are dispatched to Dispatchers.IO; do not move database work onto the main thread as features grow.
+- Compatibility target remains Android API 26+ / Java 17. Any future Room migration should preserve the existing mnemos.db data rather than silently replacing it.
+
+## Reuse audit
+
+- [Cukaccount](https://github.com/rllibo833-sudo/Cukaccount): its current README describes a portable browser-based CSV matching tool, while legacy Flutter/SQLite code remains in the repository. It is not a drop-in Android backend for LynOS; transferable principles include deterministic validation, explicit error states, and local-first processing, but legacy modules must be inspected before reuse.
+- [Toolbox](https://github.com/rllibo833-sudo/Toolbox): a mobile-first web utility with calculation and input-validation patterns. It is not an Android backend dependency and should not be copied wholesale.
+- [pusingcuk](https://github.com/rllibo833-sudo/pusingcuk): a separate language/runtime project. Cuk Studio currently provides an editor and restricted workspace commands; it does not claim to execute .cuk source.
+
+These projects are references, not runtime dependencies. LynOS should keep Android UI, persistence, and future sync/API layers separated so a future online backend can be added without sacrificing offline operation.
