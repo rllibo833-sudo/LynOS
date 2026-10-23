@@ -77,7 +77,7 @@ private fun LynOSApp(context: Context) {
  var memoryCount by remember { mutableIntStateOf(0) }
  var dataRevision by remember { mutableIntStateOf(0) }
  var message by remember { mutableStateOf("") }
- var code by remember { mutableStateOf("jancuk\nucap \"Halo dari Cuk Studio\"\nselesai jancuk") }
+ var code by remember { mutableStateOf("jancuk\nhedeh \"Halo dari Cuk Studio\"\nselesai jancuk") }
  var output by remember { mutableStateOf("Editor prototipe. Runtime .cuk penuh belum terhubung.") }
  var reduceMotion by remember { mutableStateOf(true) }
  var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -199,8 +199,14 @@ private fun LynOSApp(context: Context) {
       BasicTextField(code,{code=it},Modifier.fillMaxSize(),textStyle=TextStyle(color=Color(0xFFBFEFFF),fontSize=12.sp,lineHeight=18.sp))
      }
      Button(onClick={
-      output=if(code.trim().startsWith("jancuk")&&code.trim().endsWith("selesai jancuk")) "Wrapper source valid. Pemeriksaan struktur saja—bukan eksekusi runtime .cuk."
-      else "Gagal: source harus diawali jancuk dan diakhiri selesai jancuk."
+      val lines = code.lines().map { it.trim() }.filter { it.isNotEmpty() }
+      output = when {
+       lines.size < 3 -> "Gagal: source harus berisi wrapper dan minimal satu baris program."
+       lines.first() != "jancuk" -> "Gagal pada baris 1: source harus diawali jancuk."
+       lines.last() != "selesai jancuk" -> "Gagal: baris terakhir yang berisi teks harus selesai jancuk."
+       lines.drop(1).dropLast(1).any { it == "jancuk" || it == "selesai jancuk" } -> "Peringatan: wrapper berulang terdeteksi; pemeriksaan ini belum mem-parsing bahasa .cuk."
+       else -> "Wrapper source valid. Pemeriksaan struktur saja—bukan parsing atau eksekusi runtime .cuk."
+      }
      },modifier=Modifier.fillMaxWidth()){Text("Check source")}
      Text(output,color=Ink,fontSize=11.sp)
     }
