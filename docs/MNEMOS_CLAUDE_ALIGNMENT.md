@@ -10,7 +10,7 @@ Dokumen ini memisahkan ide yang dapat dipakai dari klaim dan implementasi Python
 |---|---|---|
 | Catatan lokal dan pencarian | Pertahankan implementasi native | `MnemosDatabase` menyimpan catatan di SQLite perangkat dan mencari judul/isi. |
 | Relasi ant catatan | Pertahankan dan kembangkan | Tabel `links` sudah menyimpan relasi tanpa arah, dengan validasi endpoint, pengurutan ID kanonis, dan penghapusan berantai. |
-| Ekspor Markdown dan JSON | Ambil sebagai fitur native berikutnya | Berguna untuk portabilitas dan backup offline; jangan bergantung pada modul Python. |
+| Ekspor Markdown dan JSON | Sudah ada di implementasi native | Snapshot diambil langsung dari SQLite dan ditulis lewat Android document picker. JSON restore bersifat additive dan transaksional; verifikasi perangkat masih diperlukan. |
 | Tags pada catatan | Ide layak, belum ada pada model saat ini | Perlu migrasi skema, model, pencarian, UI, dan ekspor secara konsisten; jangan mengklaim smart tagging sudah tersedia. |
 | Statistik/density graph | Ambil yang dapat dihitung dari SQLite | Jumlah catatan/relasi tersedia. Metrik graph lanjutan harus didefinisikan dan dihitung dari data nyata. |
 | Dashboard terminal Rich | Jangan port apa adanya | LynOS memakai Jetpack Compose. Gunakan komponen native, bukan `rich`, `psutil`, atau terminal dashboard Python. |
@@ -53,13 +53,14 @@ Tautan yang diberikan tidak berhasil diambil dari path persis tersebut (404). Ka
 - Catatan mempunyai ID, judul, isi, dan waktu pembaruan; tags, riwayat versi, node konsep terpisah, agent registry, dan embeddings belum ada di model ini.
 - Pencarian meliputi judul/isi dan meng-escape karakter LIKE agar input `%` dan `_` literal.
 - Relasi memvalidasi endpoint dalam transaksi, menormalkan urutan pasangan ID, menolak self-link, dan membatasi label relasi sampai 128 karakter.
-- UI Mnemos sudah dapat menyimpan/mengubah/menghapus catatan, mencari, membuat/melepas relasi, dan membuka catatan terhubung.
+- UI Mnemos dapat menyimpan/mengubah/menghapus catatan, mencari, membuat/melepas relasi, membuka catatan terhubung, mengekspor JSON/Markdown, dan memulihkan snapshot JSON LynOS secara additive.
+- JSON restore memvalidasi format, ID sumber unik, judul, endpoint relasi, dan panjang label relasi sebelum transaksi; ID sumber dipetakan ke ID lokal baru sehingga backup tidak menimpa catatan yang sudah ada. Seluruh penulisan catatan/relasi berada dalam satu transaksi SQLite.
 - Cuk Studio mempunyai perintah workspace terbatas yang membaca/menulis Mnemos; source `.cuk` belum dieksekusi.
 - Data tetap offline-first. Cloud sync belum dikonfigurasi.
 
 ## Urutan integrasi yang aman
 
-1. Implementasikan ekspor JSON dan Markdown dari catatan serta relasi **langsung dari SQLite**, dengan escaping yang benar dan penulisan file melalui mekanisme Android yang sesuai.
+1. Verifikasi round-trip ekspor/restore di perangkat, termasuk backup kosong, karakter Unicode/escape, backup rusak, relasi invalid, pembatalan picker, dan rollback transaksi.
 2. Tambahkan tags hanya melalui migrasi database eksplisit dan perubahan menyeluruh pada model, pencarian, UI, dan ekspor.
 3. Tambahkan statistik hanya berdasarkan query nyata; dokumentasikan definisi setiap metrik.
 4. Evaluasi agent/MCP/sync setelah ada kebutuhan arsitektur, keamanan, izin, dan penyimpanan kredensial yang jelas.
