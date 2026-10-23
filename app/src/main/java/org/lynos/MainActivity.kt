@@ -103,7 +103,7 @@ private fun LynOSApp(context: Context) {
  }
  Box(Modifier.fillMaxSize().background(Slate)) {
   NeuralBackdrop(Modifier.fillMaxSize(),reduceMotion)
-  Column(Modifier.fillMaxSize().padding(horizontal=17.dp,vertical=12.dp)) {
+  Column(Modifier.fillMaxSize().padding(horizontal=17.dp,vertical=12.dp).imePadding()) {
    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
     Column(Modifier.clickable { page=Page.HOME }) {
      Text("LYNOS",color=Ink,fontSize=20.sp,fontWeight=FontWeight.ExtraBold,letterSpacing=3.sp)
@@ -117,6 +117,29 @@ private fun LynOSApp(context: Context) {
     Box(Modifier.size(6.dp).background(Cyan,CircleShape)); Spacer(Modifier.width(7.dp))
     Text(page.name.replace('_',' '),color=Muted,fontSize=9.sp,letterSpacing=1.6.sp)
     Spacer(Modifier.weight(1f)); Text("LOCAL-FIRST",color=Muted,fontSize=8.sp)
+   }
+   Row(
+    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+    horizontalArrangement=Arrangement.spacedBy(6.dp),
+    verticalAlignment=Alignment.CenterVertically
+   ) {
+    Page.values().forEach { destination ->
+     val active = page == destination
+     Box(
+      Modifier.border(1.dp, if(active) Cyan.copy(alpha=.72f) else Blue.copy(alpha=.28f), RoundedCornerShape(9.dp))
+       .background(if(active) Cyan.copy(alpha=.12f) else Panel.copy(alpha=.72f), RoundedCornerShape(9.dp))
+       .clickable { page = destination }
+       .padding(horizontal=11.dp, vertical=8.dp)
+     ) {
+      Text(
+       destination.name.replace('_',' '),
+       color=if(active) Cyan else Muted,
+       fontSize=9.sp,
+       fontWeight=if(active) FontWeight.Bold else FontWeight.Medium,
+       letterSpacing=.55.sp
+      )
+     }
+    }
    }
    Spacer(Modifier.height(12.dp))
    Box(Modifier.weight(1f).fillMaxWidth()) {
