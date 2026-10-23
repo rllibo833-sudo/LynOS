@@ -59,3 +59,6 @@ Open the project in Android Studio with Android SDK 35 installed and sync the Gr
 - [pusingcuk](https://github.com/rllibo833-sudo/pusingcuk): a separate language/runtime project. Cuk Studio currently provides an editor and restricted workspace commands; it does not claim to execute .cuk source.
 
 These projects are references, not runtime dependencies. LynOS should keep Android UI, persistence, and future sync/API layers separated so a future online backend can be added without sacrificing offline operation.
+## Mnemos compatibility audit
+
+The Claude-provided Mnemos assets have been reviewed against the native Android implementation. Python CLI, Rich terminal UI, `psutil`, agent registry, and MCP examples are not drop-in LynOS components; they assume a separate Python backend and APIs not present in the Kotlin app. The accepted direction is native SQLite-backed functionality, with JSON/Markdown export as the next portability feature. Tags and advanced graph analytics require explicit schema/API work before they can be advertised. See [the full compatibility audit](docs/MNEMOS_CLAUDE_ALIGNMENT.md) for per-file findings and implementation decisions.
