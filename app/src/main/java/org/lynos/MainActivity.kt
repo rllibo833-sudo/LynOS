@@ -3,6 +3,7 @@ package org.lynos
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
@@ -64,13 +65,24 @@ class MainActivity : ComponentActivity() {
   setContent { MaterialTheme(colorScheme=darkColorScheme(primary=Cyan,background=Slate,surface=Navy)) { LynOSApp(applicationContext) } }
  }
 }
-private enum class Page { HOME, MNEMOS, CUK, SETTINGS, STATUS }
+private enum class Page { HOME, APPS, MNEMOS, CUK, SETTINGS, STATUS }
 
 @Composable
 private fun LynOSApp(context: Context) {
  val db=remember { MnemosDatabase(context) }
  var page by remember { mutableStateOf(Page.HOME) }
  var search by remember { mutableStateOf("") }
+ var appQuery by remember { mutableStateOf("") }
+ val launchableApps = remember(context) {
+  val pm = context.packageManager
+  val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+  @Suppress("DEPRECATION")
+  pm.queryIntentActivities(intent, 0).mapNotNull { info ->
+   val appInfo = info.activityInfo?.applicationInfo ?: return@mapNotNull null
+   if (appInfo.packageName == context.packageName) null
+   else LaunchableApp(info.loadLabel(pm).toString(), appInfo.packageName, info.loadIcon(pm))
+  }.distinctBy { it.packageName }.sortedBy { it.label.lowercase(Locale.ROOT) }
+ }
  var title by remember { mutableStateOf("") }
  var body by remember { mutableStateOf("") }
  var editId by remember { mutableStateOf<Long?>(null) }
@@ -181,6 +193,32 @@ private fun LynOSApp(context: Context) {
       Tile("⚙","SETTINGS","Appearance",Modifier.weight(1f)) { page=Page.SETTINGS }
       Tile("◉","STATUS","Device info",Modifier.weight(1f)) { page=Page.STATUS }
      }
+    }
+    Page.APPS -> Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(9.dp)) {
+     Text("APP SPACE / ANDROID LAUNCHER",color=Cyan,fontSize=10.sp,fontWeight=FontWeight.Bold)
+     Text("Buka aplikasi terpasang. Android tetap mengelola task dan multitasking.",color=Muted,fontSize=10.sp)
+     Field(appQuery,{appQuery=it},"Cari aplikasi…",true)
+     val filteredApps = launchableApps.filter { it.label.contains(appQuery,true) || it.packageName.contains(appQuery,true) }
+     Text("INSTALLED APPS · ${filteredApps.size}",color=Muted,fontSize=9.sp)
+     LazyColumn(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+      items(filteredApps,key={it.packageName}) { app ->
+       Row(Modifier.fillMaxWidth().border(1.dp,Blue.copy(alpha=.32f),RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).clickable {
+        try {
+         val launch = context.packageManager.getLaunchIntentForPackage(app.packageName)
+         if(launch != null) context.startActivity(launch) else message = "Android tidak menyediakan tombol buka untuk ${app.label}."
+        } catch(e:Exception) { message="Gagal membuka ${app.label}: ${e.message ?: "kesalahan Android"}" }
+       }.padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+        androidx.compose.foundation.Image(painter=androidx.compose.ui.graphics.painter.DrawablePainter(app.icon),contentDescription=null,modifier=Modifier.size(36.dp))
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+         Text(app.label,color=Ink,fontSize=12.sp,fontWeight=FontWeight.SemiBold,maxLines=1)
+         Text(app.packageName,color=Muted,fontSize=8.sp,maxLines=1)
+        }
+        Text("OPEN ↗",color=Cyan,fontSize=9.sp,fontWeight=FontWeight.Bold)
+       }
+      }
+     }
+     if(message.isNotBlank()) Text(message,color=Cyan,fontSize=10.sp)
     }
     Page.MNEMOS -> {
      Column(Modifier.fillMaxSize(),verticalArrangement=Arrangement.spacedBy(7.dp)) {
@@ -363,13 +401,15 @@ private fun LynOSApp(context: Context) {
    }
    Spacer(Modifier.height(7.dp))
    Row(Modifier.fillMaxWidth().border(1.dp,Blue.copy(alpha=.3f),RoundedCornerShape(14.dp)).background(Color(0xE51A293B),RoundedCornerShape(14.dp)).padding(4.dp),horizontalArrangement=Arrangement.spacedBy(3.dp)) {
-    listOf(Page.HOME to "Home",Page.MNEMOS to "Mnemos",Page.CUK to "Cuk",Page.STATUS to "Status",Page.SETTINGS to "Settings").forEach { (p,label) ->
+    listOf(Page.HOME to "Home",Page.APPS to "Apps",Page.MNEMOS to "Mnemos",Page.CUK to "Cuk",Page.STATUS to "Status",Page.SETTINGS to "Settings").forEach { (p,label) ->
      Column(Modifier.weight(1f).background(if(page==p)Color(0x4438CFFF) else Color.Transparent,RoundedCornerShape(9.dp)).clickable{page=p}.padding(vertical=9.dp),horizontalAlignment=Alignment.CenterHorizontally){Text(label,color=if(page==p)Cyan else Muted,fontSize=9.sp)}
     }
    }
   }
  }
 }
+
+private data class LaunchableApp(val label:String,val packageName:String,val icon:android.graphics.drawable.Drawable)
 
 @Composable private fun MetricCard(label:String,value:String,description:String,modifier:Modifier) {
  Column(modifier.border(1.dp,Blue.copy(alpha=.32f),RoundedCornerShape(12.dp))
