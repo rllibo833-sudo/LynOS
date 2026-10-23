@@ -238,25 +238,7 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
                 append(", \"updatedAt\": ").append(note.updatedAt).append('}')
             }
             if (notes.isNotEmpty()) append('\n')
-            append("  ],\n  \"links\": [")
-            links.forEachIndexed { index, link ->
-                append(if (index == 0) "\n" else ",\n")
-                append("    {\"sourceId\": ").append(link.first)
-                append(", \"targetId\": ").append(link.second)
-                append(", \"relation\": ").append(quote(link.third)).append('}')
-            }
-            if (links.isNotEmpty()) append('\n')
-            append("  ]\n    companion object {
-        private const val EXPORT_FORMAT = "lynos-mnemos-export-v1"
-        private const val MAX_IMPORT_BYTES = 10 * 1024 * 1024
-        private const val MAX_IMPORT_NOTES = 50_000
-        private const val MAX_IMPORT_LINKS = 200_000
-        private const val MAX_TITLE_CHARS = 4_096
-        private const val MAX_BODY_CHARS = 1_000_000
-        private const val MAX_RELATION_CHARS = 128
-    }
-
-}\n")
+            append("  ]\\n}\\n")
         }
     }
 
@@ -385,6 +367,17 @@ class MnemosDatabase(context: Context) : SQLiteOpenHelper(context, "mnemos.db", 
                 }
             }
         }
+    }
+
+
+    companion object {
+        private const val EXPORT_FORMAT = "lynos-mnemos-export-v1"
+        private const val MAX_IMPORT_BYTES = 10 * 1024 * 1024
+        private const val MAX_IMPORT_NOTES = 50_000
+        private const val MAX_IMPORT_LINKS = 200_000
+        private const val MAX_TITLE_CHARS = 4_096
+        private const val MAX_BODY_CHARS = 1_000_000
+        private const val MAX_RELATION_CHARS = 128
     }
 
 }
