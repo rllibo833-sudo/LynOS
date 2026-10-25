@@ -33,6 +33,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.Bitmap
+import android.graphics.Canvas as AndroidCanvas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -237,7 +240,14 @@ private fun LynOSApp(context: Context) {
          if(launch != null) context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) else message = "Android tidak menyediakan tombol buka untuk ${app.label}."
         } catch(e:Exception) { message="Gagal membuka ${app.label}: ${e.message ?: "kesalahan Android"}" }
        }.padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
-        androidx.compose.foundation.Image(painter=androidx.compose.ui.graphics.painter.DrawablePainter(app.icon),contentDescription=null,modifier=Modifier.size(36.dp))
+         val iconBitmap = remember(app.packageName) {
+          Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888).also { bitmap ->
+           val canvas = AndroidCanvas(bitmap)
+           app.icon.setBounds(0, 0, canvas.width, canvas.height)
+           app.icon.draw(canvas)
+          }.asImageBitmap()
+         }
+         androidx.compose.foundation.Image(bitmap=iconBitmap,contentDescription=app.label,modifier=Modifier.size(36.dp))
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
          Text(app.label,color=Ink,fontSize=12.sp,fontWeight=FontWeight.SemiBold,maxLines=1)
@@ -299,9 +309,14 @@ private fun LynOSApp(context: Context) {
           }.padding(vertical=7.dp))
           TextButton(onClick={scope.launch {
            try {
-            withContext(Dispatchers.IO) { db.unlinkNotes(selectedId ?: return@launch,relatedNote.id) }
+             val fromId = selectedId
+             if (fromId == null) {
+              message = "Pilih catatan sumber dahulu."
+             } else {
+              withContext(Dispatchers.IO) { db.unlinkNotes(fromId,relatedNote.id) }
             dataRevision++
             message="Relasi dilepas; kedua catatan tetap tersimpan."
+             }
            } catch(e:Exception) { message=e.message ?: "Relasi gagal dilepas." }
           }},contentPadding=PaddingValues(horizontal=7.dp,vertical=2.dp)) { Text("Unlink",fontSize=9.sp) }
          }
