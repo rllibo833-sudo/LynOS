@@ -1,7 +1,13 @@
 name: Android CI
 
 on:
-  # Builds are intentionally manual while LynOS UI/backend are under active development.
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/android-ci.yml'
   workflow_dispatch:
 
 permissions:
