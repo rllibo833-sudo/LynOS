@@ -15,9 +15,16 @@
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="fullSensor">
+            <!-- Keep the ordinary app icon available in the app drawer. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Also register as a real Home app so Android offers LynOS as a default launcher. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
