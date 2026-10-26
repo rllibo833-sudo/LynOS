@@ -2,11 +2,13 @@ package org.lynos
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -148,11 +150,23 @@ private fun LynOSApp(context: Context) {
  var commandInput by remember { mutableStateOf("help") }
  var terminalHistory by remember { mutableStateOf(listOf("LYNOS CUK TERMINAL / local workspace commands only")) }
  val preferences = remember { context.getSharedPreferences("lynos_preferences", Context.MODE_PRIVATE) }
- var reduceMotion by remember { mutableStateOf(preferences.getBoolean("reduce_motion", true)) }
+ var reduceMotion by remember { mutableStateOf(preferences.getBoolean("reduce_motion", false)) }
+ var isDefaultHome by remember {
+  mutableStateOf(
+   Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+    context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_HOME)
+  )
+ }
+ val homeRoleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+  isDefaultHome = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+   context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_HOME)
+ }
  var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
  LaunchedEffect(Unit) {
   while (true) {
    nowMillis = System.currentTimeMillis()
+   isDefaultHome = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+    context.getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_HOME)
    delay(1000)
   }
  }
@@ -209,6 +223,26 @@ private fun LynOSApp(context: Context) {
      Text("PERSONAL KNOWLEDGE SYSTEM",color=Cyan,fontSize=9.sp,fontWeight=FontWeight.Bold,letterSpacing=1.4.sp)
      Text("Thoughts form\na living network.",color=Ink,fontSize=30.sp,lineHeight=34.sp,fontWeight=FontWeight.SemiBold)
      Text("A quiet workspace for ideas, code, and connections.",color=Muted,fontSize=11.sp)
+     if (!isDefaultHome) {
+      Button(
+       onClick = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+         val roleManager = context.getSystemService(RoleManager::class.java)
+         if (roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
+          homeRoleLauncher.launch(roleManager.createRequestRoleIntent(RoleManager.ROLE_HOME))
+         } else {
+          context.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+         }
+        } else {
+         context.startActivity(Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }
+       },
+       modifier = Modifier.fillMaxWidth(),
+       colors = ButtonDefaults.buttonColors(containerColor = Cyan.copy(alpha = .16f), contentColor = Cyan)
+      ) {
+       Text("Jadikan launcher utama", fontWeight = FontWeight.Bold)
+      }
+     }
      NeuralLandscape(Modifier.fillMaxWidth().height(210.dp), reduceMotion)
      Text("MNEMOS FIELD  ·  "+memoryCount+" notes stored on device",color=Ink,fontSize=10.sp)
      Row(horizontalArrangement=Arrangement.spacedBy(7.dp)) {
@@ -484,7 +518,7 @@ private data class LaunchableApp(val label:String,val packageName:String,val ico
 }
 @Composable private fun NeuralBackdrop(modifier:Modifier,reduced:Boolean){
  val transition=androidx.compose.animation.core.rememberInfiniteTransition(label="neural")
- val phase by transition.animateFloat(0f,if(reduced)0f else 1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)26000 else 12000)),label="phase")
+ val phase by transition.animateFloat(0f,if(reduced)0f else 1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)26000 else 12000,easing=androidx.compose.animation.core.LinearEasing)),label="phase")
  Canvas(modifier){
   drawRect(Brush.verticalGradient(listOf(Navy,Slate,Color(0xFF111A27))))
   val center=Offset(size.width*.67f,size.height*.48f)
@@ -496,7 +530,7 @@ private data class LaunchableApp(val label:String,val packageName:String,val ico
 }
 @Composable private fun NeuralLandscape(modifier:Modifier,reduced:Boolean){
  val transition=androidx.compose.animation.core.rememberInfiniteTransition(label="landscape")
- val phase by transition.animateFloat(0f,if(reduced)0f else 1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)30000 else 15000)),label="landscapePhase")
+ val phase by transition.animateFloat(0f,if(reduced)0f else 1f,androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(if(reduced)30000 else 15000,easing=androidx.compose.animation.core.LinearEasing)),label="landscapePhase")
  Canvas(modifier){
   val w=size.width; val h=size.height
   val corner=androidx.compose.ui.geometry.CornerRadius(22.dp.toPx())
@@ -505,7 +539,12 @@ private data class LaunchableApp(val label:String,val packageName:String,val ico
   drawCircle(Brush.radialGradient(listOf(Blue.copy(alpha=.11f),Color.Transparent),Offset(w*.88f,h*.72f),w*.34f),w*.34f,Offset(w*.88f,h*.72f))
   for(i in 0..7) drawLine(Blue.copy(alpha=.075f),Offset(w*.5f,h*.58f),Offset(w*(i/7f),h*.98f),.55.dp.toPx())
   for(i in 0..5){val t=i/5f;val y=h*(.66f+t*t*.30f);drawLine(Blue.copy(alpha=.065f+t*.025f),Offset(w*.02f,y),Offset(w*.98f,y),.55.dp.toPx())}
-  val pts=nodePoints.map{Offset(w*(.04f+it.first*.92f),h*(.08f+it.second*.84f))}
+  val pts=nodePoints.mapIndexed{index,node->
+   val angle=phase*6.283f+index*.83f
+   val driftX=if(reduced)0f else sin(angle)*2.2.dp.toPx()
+   val driftY=if(reduced)0f else sin(angle*.73f+1.1f)*1.8.dp.toPx()
+   Offset(w*(.04f+node.first*.92f)+driftX,h*(.08f+node.second*.84f)+driftY)
+  }
   nodeEdges.forEachIndexed{i,e->
    val a=pts[e.first];val b=pts[e.second];val dx=b.x-a.x;val dy=b.y-a.y
    val bend=Offset((a.x+b.x)/2f-dy*.10f,(a.y+b.y)/2f+dx*.10f)
